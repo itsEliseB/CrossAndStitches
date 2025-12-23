@@ -1,0 +1,86 @@
+# Docker Compose configuration file
+# This file defines all the containers (services) that make up your application
+# Run with: docker compose up
+
+services:
+  # PostgreSQL Database Container
+  # This stores all your user accounts and design data
+  database:
+    image: postgres:15-alpine  # Uses official PostgreSQL image (alpine = smaller size)
+    container_name: crossstitch_db
+    environment:
+      # These come from your .env file
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      # Persists data even when container stops
+      # postgres_data is defined at the bottom of this file
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      # Makes database accessible at localhost:5433 (5432 is used by system PostgreSQL)
+      - "5433:5432"
+    healthcheck:
+      # Checks if database is ready before starting other services
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Python Backend Container (FastAPI)
+  # Handles API requests, authentication, image processing
+  backend:
+    build:
+      context: ./backend  # Looks for Dockerfile in ./backend folder
+      dockerfile: Dockerfile
+    container_name: crossstitch_backend
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+      - SECRET_KEY=${SECRET_KEY}
+      - PYTHONDONTWRITEBYTECODE=1  # Prevent Python from creating __pycache__
+    volumes:
+      # Mount your code into the container so changes reflect immediately (hot reload)
+      - ./backend:/app
+      # Store uploaded images in a persistent volume
+      - uploads:/app/uploads
+    ports:
+      # Backend API accessible at http://localhost:8000
+      - "8000:8000"
+    depends_on:
+      database:
+        condition: service_healthy  # Wait for database to be ready
+    command: >
+      sh -c "
+        echo 'Waiting for database...' &&
+        sleep 2 &&
+        python -m uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+      "
+    # Restart automatically if it crashes (useful during development)
+    restart: unless-stopped
+
+  # Vue.js Frontend Container
+  # The user interface - runs in development mode with hot reload
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: crossstitch_frontend
+    volumes:
+      # Mount code for hot reload
+      - ./frontend:/app
+      # Don't mount node_modules (use container's version)
+      - /app/node_modules
+    ports:
+      # Frontend accessible at http://localhost:5173
+      - "5173:5173"
+    environment:
+      - VITE_API_URL=http://localhost:8000
+    depends_on:
+      - backend
+    command: npm run dev -- --host
+    restart: unless-stopped
+
+# Named volumes for persistent data
+volumes:
+  postgres_data:  # Database files persist here
+  uploads:        # User-uploaded images persist here
