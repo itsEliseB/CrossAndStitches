@@ -1,0 +1,28 @@
+# Python Dependencies for Backend
+
+# FastAPI - Modern web framework for building APIs
+fastapi==0.104.1
+
+# Uvicorn - ASGI server to run FastAPI
+uvicorn[standard]==0.24.0
+
+# Database
+sqlalchemy==2.0.23          # ORM (Object Relational Mapper) - talk to database with Python objects
+psycopg2-binary==2.9.9      # PostgreSQL driver
+alembic==1.12.1             # Database migrations (tracks schema changes)
+
+# Authentication & Security
+python-jose[cryptography]==3.3.0  # JWT token creation/validation
+passlib[bcrypt]==1.7.4            # Password hashing
+bcrypt==4.0.1                     # Explicit bcrypt version for compatibility
+python-multipart==0.0.6           # For file uploads
+email-validator==2.1.0            # Email validation for Pydantic
+
+# Image Processing
+Pillow==10.1.0              # Image manipulation (resize, quantize colors)
+numpy==1.26.2               # Array operations for image data
+
+# Utilities
+python-dotenv==1.0.0        # Load environment variables from .env file
+pydantic==2.5.0             # Data validation
+pydantic-settings==2.1.0    # Settings management
