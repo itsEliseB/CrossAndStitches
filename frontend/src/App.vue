@@ -60,8 +60,8 @@ authStore.checkAuth()
 <style>
 /* Navigation Bar Styles */
 .navbar {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
+  background: linear-gradient(135deg, #ffffff 0%, #dcdcdc 100%);
+  color: #123456;
   padding: 1rem 0;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
@@ -78,7 +78,7 @@ authStore.checkAuth()
 .nav-brand {
   font-size: 1.5rem;
   font-weight: bold;
-  color: white;
+  color: #123456;
   text-decoration: none;
   transition: opacity 0.2s;
 }
@@ -94,7 +94,7 @@ authStore.checkAuth()
 }
 
 .nav-link {
-  color: white;
+  color: #123456;
   text-decoration: none;
   transition: opacity 0.2s;
 }
@@ -104,14 +104,14 @@ authStore.checkAuth()
 }
 
 .nav-user {
-  color: rgba(255, 255, 255, 0.8);
+  color: #123456;
   font-size: 0.9rem;
 }
 
 .nav-button {
   background: rgba(255, 255, 255, 0.2);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  color: white;
+  border: #123456 1px solid;
+  color: #123456;
   padding: 0.5rem 1rem;
   border-radius: 4px;
   cursor: pointer;
@@ -124,7 +124,7 @@ authStore.checkAuth()
 
 /* Main Content Area */
 .main-content {
-  max-width: 1200px;
+  /* max-width: 1200px; */
   margin: 2rem auto;
   padding: 0 2rem;
 }

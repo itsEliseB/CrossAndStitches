@@ -124,16 +124,57 @@
       </div>
     </div>
 
-    <!-- Canvas Drawing Area -->
+    <!-- Canvas Drawing Area with Axis Numbering -->
     <div class="canvas-container">
-      <canvas
-        ref="canvasRef"
-        @mousedown="startDrawing"
-        @mousemove="handleMouseMove"
-        @mouseup="stopDrawing"
-        @mouseleave="handleMouseLeave"
-        @click="drawPixel"
-      ></canvas>
+      <div class="canvas-with-axes">
+        <!-- Top axis numbers -->
+        <div class="axis-top">
+          <div class="axis-corner"></div>
+          <div class="axis-numbers-horizontal">
+            <span
+              v-for="x in gridWidth"
+              :key="`top-${x}`"
+              :style="{ width: cellSize + 'px' }"
+              class="axis-number"
+              :class="{
+                'major-tick': x % 10 === 0,
+                'minor-tick': x % 5 === 0 && x % 10 !== 0
+              }"
+            >
+              {{ x % 5 === 0 ? x : '' }}
+            </span>
+          </div>
+        </div>
+
+        <!-- Canvas row with left axis -->
+        <div class="canvas-row">
+          <!-- Left axis numbers -->
+          <div class="axis-left">
+            <span
+              v-for="y in gridHeight"
+              :key="`left-${y}`"
+              :style="{ height: cellSize + 'px' }"
+              class="axis-number"
+              :class="{
+                'major-tick': y % 10 === 0,
+                'minor-tick': y % 5 === 0 && y % 10 !== 0
+              }"
+            >
+              {{ y % 5 === 0 ? y : '' }}
+            </span>
+          </div>
+
+          <!-- Canvas -->
+          <canvas
+            ref="canvasRef"
+            @mousedown="startDrawing"
+            @mousemove="handleMouseMove"
+            @mouseup="stopDrawing"
+            @mouseleave="handleMouseLeave"
+            @click="drawPixel"
+          ></canvas>
+        </div>
+      </div>
     </div>
 
     <!-- Color Palette -->
@@ -446,11 +487,22 @@ const renderGrid = () => {
     }
   }
 
-  // Draw grid lines
-  ctx.strokeStyle = '#ddd'
-  ctx.lineWidth = 1
-
+  // Draw grid lines (different styles for multiples of 5 and 10)
   for (let x = 0; x <= gridWidth.value; x++) {
+    if (x % 10 === 0) {
+      // Bold dark line every 10 columns
+      ctx.strokeStyle = '#666'
+      ctx.lineWidth = 2
+    } else if (x % 5 === 0) {
+      // Medium lighter line every 5 columns (but not 10)
+      ctx.strokeStyle = '#bbb'
+      ctx.lineWidth = 1.5
+    } else {
+      // Regular thin light line
+      ctx.strokeStyle = '#ddd'
+      ctx.lineWidth = 1
+    }
+
     ctx.beginPath()
     ctx.moveTo(x * cellSize.value, 0)
     ctx.lineTo(x * cellSize.value, canvas.height)
@@ -458,6 +510,20 @@ const renderGrid = () => {
   }
 
   for (let y = 0; y <= gridHeight.value; y++) {
+    if (y % 10 === 0) {
+      // Bold dark line every 10 rows
+      ctx.strokeStyle = '#666'
+      ctx.lineWidth = 2
+    } else if (y % 5 === 0) {
+      // Medium lighter line every 5 rows (but not 10)
+      ctx.strokeStyle = '#bbb'
+      ctx.lineWidth = 1.5
+    } else {
+      // Regular thin light line
+      ctx.strokeStyle = '#ddd'
+      ctx.lineWidth = 1
+    }
+
     ctx.beginPath()
     ctx.moveTo(0, y * cellSize.value)
     ctx.lineTo(canvas.width, y * cellSize.value)
@@ -870,6 +936,58 @@ h1 {
 canvas {
   border: 2px solid #ddd;
   cursor: crosshair;
+}
+
+/* Axis numbering styles */
+.canvas-with-axes {
+  display: inline-block;
+}
+
+.axis-top {
+  display: flex;
+}
+
+.axis-corner {
+  width: 30px;
+  height: 20px;
+}
+
+.axis-numbers-horizontal {
+  display: flex;
+  height: 20px;
+  margin-bottom: 4px;
+}
+
+.canvas-row {
+  display: flex;
+}
+
+.axis-left {
+  display: flex;
+  flex-direction: column;
+  width: 30px;
+  margin-right: 4px;
+}
+
+.axis-number {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  color: #888;
+  font-family: monospace;
+  font-weight: 500;
+  position: relative;
+}
+
+/* Shift horizontal numbers to align with grid lines */
+.axis-numbers-horizontal .axis-number {
+  transform: translateX(50%);
+}
+
+/* Shift vertical numbers to align with grid lines */
+.axis-left .axis-number {
+  transform: translateY(50%);
 }
 
 .palette {
