@@ -2,7 +2,8 @@ import { vi, beforeEach, afterEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { nextTick } from 'vue'
 import { createRouter, createMemoryHistory } from 'vue-router'
-import CreateDesign from '@/views/CreateDesign.vue'
+//import CreateDesign from '@/views/CreateDesign.vue'
+import Designer from '@/views/Designer.vue'
 
 // Mock the API client
 vi.mock('@/api/client', () => ({
@@ -52,7 +53,7 @@ export function createWrapper(options = {}) {
     ]
   })
 
-  const wrapper = mount(CreateDesign, {
+  const wrapper = mount(Designer, {
     global: {
       plugins: [router]
     },

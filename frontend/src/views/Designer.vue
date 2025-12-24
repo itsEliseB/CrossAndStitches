@@ -1,175 +1,84 @@
 <!--
-  Edit Design Page
-  Edit an existing cross-stitch pattern
+  Designer Component
+  Unified component for creating and editing cross-stitch patterns
+  Handles both /designs/create and /designs/:id/edit routes
 -->
 
 <template>
-  <div class="edit-page">
-    <div v-if="loading" class="loading">Loading design...</div>
+  <div class="designer-page">
+    <!-- Loading state (edit mode only) -->
+    <div v-if="isEditMode && loading" class="loading">Loading design...</div>
 
-    <div v-else-if="error" class="error-message">{{ error }}</div>
+    <!-- Error state (edit mode only) -->
+    <div v-else-if="isEditMode && error" class="error-message">{{ error }}</div>
 
+    <!-- Main designer interface -->
     <div v-else>
-      <h1>Edit Design: {{ title }}</h1>
+      <h1>{{ isEditMode ? `Edit Design: ${title}` : 'Create New Design' }}</h1>
 
-      <!-- Settings Panel -->
-      <div class="settings-panel">
-        <div class="setting-group">
-          <label>Current Color:</label>
-          <input v-model="currentColor" type="color" />
-          <span class="color-display" :style="{ background: currentColor }"></span>
-        </div>
+      <!-- Settings Panel Component -->
+      <SettingsPanel
+        v-model:currentColor="currentColor"
+        v-model:tool="tool"
+        v-model:brushSize="brushSize"
+        v-model:gridWidth="gridWidth"
+        v-model:gridHeight="gridHeight"
+        :hovered-color-info="hoveredColorInfo"
+        :can-undo="canUndo"
+        :can-redo="canRedo"
+        :show-clear-button="!isEditMode"
+        :show-grid-size="!isEditMode"
+        @undo="undo"
+        @redo="redo"
+        @clear-grid="clearGrid"
+        @resize="resizeGrid"
+      />
 
-        <div class="setting-group">
-          <label>Tool:</label>
-          <button
-            @click="tool = 'draw'"
-            :class="['btn', 'btn-small', { active: tool === 'draw' }]"
-          >
-            ✏️ Draw
-          </button>
-          <button
-            @click="tool = 'erase'"
-            :class="['btn', 'btn-small', { active: tool === 'erase' }]"
-          >
-            🧹 Erase
-          </button>
-          <button
-            @click="tool = 'bucket'"
-            :class="['btn', 'btn-small', { active: tool === 'bucket' }]"
-          >
-            🪣 Fill
-          </button>
-          <button
-            @click="tool = 'eyedropper'"
-            :class="['btn', 'btn-small', { active: tool === 'eyedropper' }]"
-          >
-            💧 Eyedropper
-          </button>
-        </div>
+    <!-- Grid Controls Component -->
+    <GridControls
+      :grid-width="gridWidth"
+      :grid-height="gridHeight"
+      @add-row-top="addRowTop"
+      @remove-row-top="removeRowTop"
+      @add-row-bottom="addRowBottom"
+      @remove-row-bottom="removeRowBottom"
+      @add-column-left="addColumnLeft"
+      @remove-column-left="removeColumnLeft"
+      @add-column-right="addColumnRight"
+      @remove-column-right="removeColumnRight"
+    />
 
-        <div class="setting-group" v-if="tool === 'draw' || tool === 'erase'">
-          <label>Brush Size:</label>
-          <button
-            v-for="size in [1, 2, 3, 4, 5]"
-            :key="size"
-            @click="brushSize = size"
-            :class="['btn', 'btn-small', 'btn-brush-size', { active: brushSize === size }]"
-          >
-            {{ size }}x{{ size }}
-          </button>
-        </div>
+    <!-- Canvas Drawing Area -->
+    <div class="canvas-container">
+      <canvas
+        ref="canvasRef"
+        @mousedown="startDrawing"
+        @mousemove="handleMouseMove"
+        @mouseup="stopDrawing"
+        @mouseleave="handleMouseLeave"
+        @click="drawPixel"
+      ></canvas>
+    </div>
 
-        <!-- Eyedropper color info display -->
-        <div v-if="hoveredColorInfo && tool === 'eyedropper'" class="color-info-display">
-          <div class="color-info-content">
-            <div class="color-info-swatch" :style="{ backgroundColor: hoveredColorInfo.hex || 'transparent' }"></div>
-            <div class="color-info-text">
-              <strong>{{ hoveredColorInfo.code }}</strong>
-              <span>{{ hoveredColorInfo.name }}</span>
-              <small v-if="hoveredColorInfo.hex">{{ hoveredColorInfo.hex }}</small>
-            </div>
-          </div>
-        </div>
+    <!-- Color Palette Component -->
+    <ColorPalette
+      v-model:currentColor="currentColor"
+      :palette-colors="paletteColors"
+    />
 
-        <div class="setting-group">
-          <label>History:</label>
-          <button
-            @click="undo"
-            :disabled="!canUndo"
-            class="btn btn-small"
-            title="Undo (Ctrl+Z)"
-          >
-            ↶ Undo
-          </button>
-          <button
-            @click="redo"
-            :disabled="!canRedo"
-            class="btn btn-small"
-            title="Redo (Ctrl+Y)"
-          >
-            ↷ Redo
-          </button>
-        </div>
-      </div>
-
-      <!-- Grid Controls -->
-      <div class="grid-controls">
-        <h3>Modify Grid</h3>
-        <div class="controls-layout">
-          <div class="control-row">
-            <button @click="addRowTop" class="btn btn-small btn-add">⬆️ Add Row Top</button>
-            <button @click="removeRowTop" class="btn btn-small btn-remove" :disabled="gridHeight <= 5">❌ Remove Top</button>
-          </div>
-          <div class="control-row">
-            <button @click="addColumnLeft" class="btn btn-small btn-add">⬅️ Add Column Left</button>
-            <button @click="removeColumnLeft" class="btn btn-small btn-remove" :disabled="gridWidth <= 5">❌ Remove Left</button>
-            <span class="grid-info">{{ gridHeight }}×{{ gridWidth }}</span>
-            <button @click="removeColumnRight" class="btn btn-small btn-remove" :disabled="gridWidth <= 5">❌ Remove Right</button>
-            <button @click="addColumnRight" class="btn btn-small btn-add">➡️ Add Column Right</button>
-          </div>
-          <div class="control-row">
-            <button @click="addRowBottom" class="btn btn-small btn-add">⬇️ Add Row Bottom</button>
-            <button @click="removeRowBottom" class="btn btn-small btn-remove" :disabled="gridHeight <= 5">❌ Remove Bottom</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Canvas -->
-      <div class="canvas-container">
-        <canvas
-          ref="canvasRef"
-          @mousedown="startDrawing"
-          @mousemove="handleMouseMove"
-          @mouseup="stopDrawing"
-          @mouseleave="handleMouseLeave"
-          @click="drawPixel"
-        ></canvas>
-      </div>
-
-      <!-- Color Palette -->
-      <div class="palette">
-        <h3>DMC Thread Color Palette</h3>
-        <div class="palette-colors">
-          <div
-            v-for="color in paletteColors"
-            :key="color"
-            class="palette-color"
-            :class="{
-              active: currentColor === color,
-              transparent: color === TRANSPARENT
-            }"
-            :style="color !== TRANSPARENT ? { background: color } : {}"
-            @click="currentColor = color"
-            :title="getColorName(color)"
-          >
-            <template v-if="color === TRANSPARENT">
-              <div class="checkered-bg"></div>
-            </template>
-          </div>
-        </div>
-        <div class="color-info" v-if="currentColor">
-          <strong>{{ getColorName(currentColor) }}</strong>
-        </div>
-      </div>
-
-      <!-- Update Form -->
-      <div class="save-panel">
-        <h3>Update Design</h3>
-        <div class="form-group">
-          <label>Title:</label>
-          <input v-model="title" type="text" />
-        </div>
-        <div class="form-group">
-          <label>Description:</label>
-          <textarea v-model="description"></textarea>
-        </div>
-        <button @click="updateDesign" class="btn btn-primary" :disabled="saving">
-          {{ saving ? 'Saving...' : 'Update Design' }}
-        </button>
-        <router-link to="/designs" class="btn">Cancel</router-link>
-        <div v-if="saveError" class="error-message">{{ saveError }}</div>
-      </div>
+      <!-- Save Panel Component -->
+      <SavePanel
+        v-model:title="title"
+        v-model:description="description"
+        :saving="saving"
+        :save-error="saveError"
+        :panel-title="isEditMode ? 'Update Design' : 'Save Design'"
+        :save-button-text="isEditMode ? 'Update Design' : 'Save Design'"
+        :title-placeholder="isEditMode ? '' : 'My Cross-Stitch Pattern'"
+        :description-placeholder="isEditMode ? '' : 'Optional description'"
+        :show-cancel="isEditMode"
+        @save="saveDesign"
+      />
     </div>
   </div>
 </template>
@@ -179,27 +88,31 @@ import { ref, onMounted, nextTick, computed, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { designsAPI } from '../api/client'
 import { allDMCColors, TRANSPARENT, isTransparent, getColorDisplay } from '../utils/dmcColors'
+import SettingsPanel from '../components/SettingsPanel.vue'
+import GridControls from '../components/GridControls.vue'
+import ColorPalette from '../components/ColorPalette.vue'
+import SavePanel from '../components/SavePanel.vue'
 
 const route = useRoute()
 const router = useRouter()
 
-const designId = route.params.id
+// Mode detection
+const isEditMode = computed(() => !!route.params.id)
+const designId = computed(() => route.params.id)
 
-// State
-const loading = ref(true)
+// Loading state (for edit mode)
+const loading = ref(isEditMode.value)
 const error = ref(null)
-const saving = ref(false)
-const saveError = ref(null)
 
-const title = ref('')
-const description = ref('')
-const gridWidth = ref(0)
-const gridHeight = ref(0)
-const grid = ref([])
+// Grid settings
+const gridWidth = ref(30)
+const gridHeight = ref(30)
 const cellSize = ref(15)
 
-const currentColor = ref('#C72B3B')  // DMC 321 Red
-const tool = ref('draw')
+// Drawing state
+const grid = ref([])
+const currentColor = ref('#C72B3B')  // Default to DMC 321 Red
+const tool = ref('draw')  // 'draw' or 'erase'
 const brushSize = ref(1)  // Brush size: 1x1, 2x2, 3x3, etc.
 const isDrawing = ref(false)
 const startingTool = ref(null)  // Track tool at start of drawing operation
@@ -210,6 +123,7 @@ const cursorPosition = ref(null)  // Current cursor position for brush preview
 const history = ref([])
 const historyIndex = ref(-1)
 
+// Canvas
 const canvasRef = ref(null)
 let ctx = null
 
@@ -268,10 +182,32 @@ const paletteColors = [
   ...allDMCColors.map(c => c.hex)
 ]
 
-// Load design
-onMounted(async () => {
+// Save state
+const title = ref('')
+const description = ref('')
+const saving = ref(false)
+const saveError = ref(null)
+
+// Initialize grid data (for create mode)
+const initializeGrid = () => {
+  grid.value = []
+  for (let y = 0; y < gridHeight.value; y++) {
+    const row = []
+    for (let x = 0; x < gridWidth.value; x++) {
+      row.push(TRANSPARENT)  // Default to transparent
+    }
+    grid.value.push(row)
+  }
+
+  // Capture initial state
+  history.value = [createSnapshot()]
+  historyIndex.value = 0
+}
+
+// Load design data (for edit mode)
+const loadDesign = async () => {
   try {
-    const response = await designsAPI.getById(designId)
+    const response = await designsAPI.getById(designId.value)
     const design = response.data
 
     title.value = design.title
@@ -281,72 +217,148 @@ onMounted(async () => {
     grid.value = data.grid
 
     // Validate and fix grid data
-    // Remove any undefined/null rows
     grid.value = grid.value.filter(row => row && Array.isArray(row))
 
     // Get actual dimensions from grid
     const actualHeight = grid.value.length
     const actualWidth = grid.value[0]?.length || 0
 
-    // Use actual dimensions instead of stored ones (in case of mismatch)
     gridHeight.value = actualHeight
     gridWidth.value = actualWidth
 
     // Ensure all rows have the same length
     grid.value.forEach((row, i) => {
       if (row.length < actualWidth) {
-        // Pad short rows with transparent
         while (row.length < actualWidth) {
           row.push(TRANSPARENT)
         }
       } else if (row.length > actualWidth) {
-        // Trim long rows
         grid.value[i] = row.slice(0, actualWidth)
       }
     })
 
+    // Capture initial state for undo
+    history.value = [createSnapshot()]
+    historyIndex.value = 0
+
     loading.value = false
-
-    // Wait for canvas to be rendered (after loading becomes false)
-    await nextTick()
-
-    if (canvasRef.value) {
-      ctx = canvasRef.value.getContext('2d')
-      renderGrid()
-      captureState()  // Capture initial state
-    }
   } catch (err) {
-    console.error('Error loading design:', err)
-    error.value = 'Failed to load design: ' + (err.message || err)
+    console.error('Failed to load design:', err)
+    error.value = err.response?.data?.detail || 'Failed to load design'
     loading.value = false
   }
+}
 
-  // Keyboard shortcuts for undo/redo
-  const handleKeyDown = (event) => {
-    if (isDrawing.value) return  // Don't undo/redo while drawing
+// Resize grid while preserving content (centered)
+const resizeGrid = () => {
+  captureState()
+  const oldGrid = grid.value
+  const oldHeight = oldGrid.length
+  const oldWidth = oldGrid[0]?.length || 0
 
-    // Ctrl+Z or Cmd+Z for undo
-    if ((event.ctrlKey || event.metaKey) && event.key === 'z' && !event.shiftKey) {
-      event.preventDefault()
-      undo()
+  const newHeight = gridHeight.value
+  const newWidth = gridWidth.value
+
+  // Calculate padding to center the old grid
+  const padTop = Math.floor((newHeight - oldHeight) / 2)
+  const padLeft = Math.floor((newWidth - oldWidth) / 2)
+
+  // Create new grid
+  const newGrid = []
+  for (let y = 0; y < newHeight; y++) {
+    const row = []
+    for (let x = 0; x < newWidth; x++) {
+      // Calculate position in old grid
+      const oldY = y - padTop
+      const oldX = x - padLeft
+
+      // If within old grid bounds, copy; otherwise transparent
+      if (oldY >= 0 && oldY < oldHeight && oldX >= 0 && oldX < oldWidth) {
+        row.push(oldGrid[oldY][oldX])
+      } else {
+        row.push(TRANSPARENT)
+      }
     }
-    // Ctrl+Shift+Z or Ctrl+Y for redo
-    else if (
-      ((event.ctrlKey || event.metaKey) && event.shiftKey && event.key === 'z') ||
-      ((event.ctrlKey || event.metaKey) && event.key === 'y')
-    ) {
-      event.preventDefault()
-      redo()
-    }
+    newGrid.push(row)
   }
 
-  window.addEventListener('keydown', handleKeyDown)
+  grid.value = newGrid
+  renderGrid()
+}
 
-  // Cleanup on unmount
-  onUnmounted(() => {
-    window.removeEventListener('keydown', handleKeyDown)
-  })
-})
+// Add row to top
+const addRowTop = () => {
+  captureState()
+  const newRow = Array(grid.value[0]?.length || gridWidth.value).fill(TRANSPARENT)
+  grid.value.unshift(newRow)
+  gridHeight.value++
+  renderGrid()
+}
+
+// Add row to bottom
+const addRowBottom = () => {
+  captureState()
+  const newRow = Array(grid.value[0]?.length || gridWidth.value).fill(TRANSPARENT)
+  grid.value.push(newRow)
+  gridHeight.value++
+  renderGrid()
+}
+
+// Add column to left
+const addColumnLeft = () => {
+  captureState()
+  grid.value.forEach(row => row.unshift(TRANSPARENT))
+  gridWidth.value++
+  renderGrid()
+}
+
+// Add column to right
+const addColumnRight = () => {
+  captureState()
+  grid.value.forEach(row => row.push(TRANSPARENT))
+  gridWidth.value++
+  renderGrid()
+}
+
+// Remove row from top
+const removeRowTop = () => {
+  if (grid.value.length > 5) {
+    captureState()
+    grid.value.shift()
+    gridHeight.value--
+    renderGrid()
+  }
+}
+
+// Remove row from bottom
+const removeRowBottom = () => {
+  if (grid.value.length > 5) {
+    captureState()
+    grid.value.pop()
+    gridHeight.value--
+    renderGrid()
+  }
+}
+
+// Remove column from left
+const removeColumnLeft = () => {
+  if (grid.value[0]?.length > 5) {
+    captureState()
+    grid.value.forEach(row => row.shift())
+    gridWidth.value--
+    renderGrid()
+  }
+}
+
+// Remove column from right
+const removeColumnRight = () => {
+  if (grid.value[0]?.length > 5) {
+    captureState()
+    grid.value.forEach(row => row.pop())
+    gridWidth.value--
+    renderGrid()
+  }
+}
 
 // Helper function to draw checkered pattern for transparent cells
 const drawCheckeredPattern = (x, y, size) => {
@@ -369,7 +381,7 @@ const drawCheckeredPattern = (x, y, size) => {
   }
 }
 
-// Render grid
+// Render grid on canvas
 const renderGrid = () => {
   if (!ctx) return
 
@@ -451,6 +463,7 @@ const renderGrid = () => {
   }
 }
 
+// Get grid coordinates from mouse event
 const getGridCoords = (event) => {
   const canvas = canvasRef.value
   const rect = canvas.getBoundingClientRect()
@@ -459,6 +472,7 @@ const getGridCoords = (event) => {
   return { x, y }
 }
 
+// Drawing functions
 const startDrawing = (event) => {
   // Remember which tool we started with (eyedropper may change it)
   startingTool.value = tool.value
@@ -626,91 +640,22 @@ const floodFill = (startX, startY, replacementColor) => {
   renderGrid()
 }
 
-// Add row to top
-const addRowTop = () => {
-  captureState()
-  const newRow = Array(gridWidth.value).fill(TRANSPARENT)
-  grid.value.unshift(newRow)
-  gridHeight.value++
-  renderGrid()
-}
-
-// Add row to bottom
-const addRowBottom = () => {
-  captureState()
-  const newRow = Array(gridWidth.value).fill(TRANSPARENT)
-  grid.value.push(newRow)
-  gridHeight.value++
-  renderGrid()
-}
-
-// Add column to left
-const addColumnLeft = () => {
-  captureState()
-  grid.value.forEach(row => row.unshift(TRANSPARENT))
-  gridWidth.value++
-  renderGrid()
-}
-
-// Add column to right
-const addColumnRight = () => {
-  captureState()
-  grid.value.forEach(row => row.push(TRANSPARENT))
-  gridWidth.value++
-  renderGrid()
-}
-
-// Remove row from top
-const removeRowTop = () => {
-  if (gridHeight.value > 5) {
+// Clear entire grid
+const clearGrid = () => {
+  if (confirm('Clear the entire grid?')) {
     captureState()
-    grid.value.shift()
-    gridHeight.value--
+    // Clear the grid without resetting history
+    for (let y = 0; y < gridHeight.value; y++) {
+      for (let x = 0; x < gridWidth.value; x++) {
+        grid.value[y][x] = TRANSPARENT
+      }
+    }
     renderGrid()
   }
 }
 
-// Remove row from bottom
-const removeRowBottom = () => {
-  if (gridHeight.value > 5) {
-    captureState()
-    grid.value.pop()
-    gridHeight.value--
-    renderGrid()
-  }
-}
-
-// Remove column from left
-const removeColumnLeft = () => {
-  if (gridWidth.value > 5) {
-    captureState()
-    grid.value.forEach(row => row.shift())
-    gridWidth.value--
-    renderGrid()
-  }
-}
-
-// Remove column from right
-const removeColumnRight = () => {
-  if (gridWidth.value > 5) {
-    captureState()
-    grid.value.forEach(row => row.pop())
-    gridWidth.value--
-    renderGrid()
-  }
-}
-
-// Get color name for display
-const getColorName = (color) => {
-  if (color === TRANSPARENT) {
-    return 'Transparent / Empty'
-  }
-  const dmcColor = allDMCColors.find(c => c.hex === color)
-  return dmcColor ? `DMC ${dmcColor.code} - ${dmcColor.name}` : color
-}
-
-// Update design
-const updateDesign = async () => {
+// Save design (create or update based on mode)
+const saveDesign = async () => {
   if (!title.value.trim()) {
     saveError.value = 'Please enter a title'
     return
@@ -726,7 +671,7 @@ const updateDesign = async () => {
     const designData = {
       title: title.value,
       description: description.value || null,
-      width: gridWidth.value,  // Save actual current dimensions
+      width: gridWidth.value,
       height: gridHeight.value,
       design_data: JSON.stringify({
         grid: grid.value,
@@ -734,19 +679,69 @@ const updateDesign = async () => {
       }),
     }
 
-    await designsAPI.update(designId, designData)
+    if (isEditMode.value) {
+      await designsAPI.update(designId.value, designData)
+    } else {
+      await designsAPI.create(designData)
+    }
+
     router.push('/designs')
   } catch (err) {
-    saveError.value = err.response?.data?.detail || 'Failed to update design'
+    saveError.value = err.response?.data?.detail || `Failed to ${isEditMode.value ? 'update' : 'save'} design`
   } finally {
     saving.value = false
   }
 }
+
+// Initialize on mount
+onMounted(async () => {
+  if (isEditMode.value) {
+    // Edit mode: Load existing design
+    await loadDesign()
+  } else {
+    // Create mode: Initialize empty grid
+    initializeGrid()
+  }
+
+  // Wait for next tick to ensure canvas is rendered
+  await nextTick()
+
+  // Setup canvas
+  if (canvasRef.value) {
+    ctx = canvasRef.value.getContext('2d')
+    renderGrid()
+  }
+
+  // Keyboard shortcuts for undo/redo
+  const handleKeyDown = (event) => {
+    if (isDrawing.value) return  // Don't undo/redo while drawing
+
+    // Ctrl+Z or Cmd+Z for undo
+    if ((event.ctrlKey || event.metaKey) && event.key === 'z' && !event.shiftKey) {
+      event.preventDefault()
+      undo()
+    }
+    // Ctrl+Shift+Z or Ctrl+Y for redo
+    else if (
+      ((event.ctrlKey || event.metaKey) && event.shiftKey && event.key === 'z') ||
+      ((event.ctrlKey || event.metaKey) && event.key === 'y')
+    ) {
+      event.preventDefault()
+      redo()
+    }
+  }
+
+  window.addEventListener('keydown', handleKeyDown)
+
+  // Cleanup on unmount
+  onUnmounted(() => {
+    window.removeEventListener('keydown', handleKeyDown)
+  })
+})
 </script>
 
 <style scoped>
-/* Reuse styles from CreateDesign.vue */
-.edit-page {
+.designer-page {
   padding: 2rem 0;
 }
 
@@ -755,47 +750,19 @@ h1 {
   color: #333;
 }
 
-.loading,
-.error-message {
+.loading {
+  padding: 2rem;
   text-align: center;
-  padding: 3rem;
+  font-size: 1.2rem;
   color: #666;
 }
 
-.settings-panel {
-  background: white;
-  padding: 1.5rem;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-  margin-bottom: 2rem;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 2rem;
-}
-
-.setting-group {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.setting-group label {
-  font-weight: 500;
-  color: #333;
-}
-
-.setting-group input[type="color"] {
-  width: 50px;
-  height: 40px;
-  border: none;
-  cursor: pointer;
-}
-
-.color-display {
-  width: 40px;
-  height: 40px;
+.error-message {
+  padding: 1rem;
+  background: #fee;
+  color: #c33;
   border-radius: 4px;
-  border: 2px solid #ddd;
+  margin: 2rem 0;
 }
 
 .btn {
@@ -805,35 +772,14 @@ h1 {
   border-radius: 4px;
   cursor: pointer;
   transition: all 0.2s;
-  text-decoration: none;
-  display: inline-block;
 }
 
 .btn:hover {
   background: #f5f5f5;
 }
 
-.btn.active {
-  background: #667eea;
-  color: white;
-  border-color: #667eea;
-}
-
 .btn-small {
   font-size: 0.9rem;
-}
-
-.btn-primary {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  border: none;
-  padding: 0.75rem 2rem;
-  margin-right: 1rem;
-}
-
-.btn-primary:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
 }
 
 .btn:disabled {
@@ -855,172 +801,6 @@ h1 {
 canvas {
   border: 2px solid #ddd;
   cursor: crosshair;
-}
-
-.palette {
-  background: white;
-  padding: 1.5rem;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-  margin-bottom: 2rem;
-}
-
-.palette h3 {
-  margin-bottom: 1rem;
-  color: #333;
-}
-
-.palette-colors {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-}
-
-.palette-color {
-  width: 40px;
-  height: 40px;
-  border-radius: 4px;
-  border: 2px solid #ddd;
-  cursor: pointer;
-  transition: transform 0.2s;
-}
-
-.palette-color:hover {
-  transform: scale(1.1);
-}
-
-.palette-color.active {
-  border-color: #667eea;
-  border-width: 3px;
-}
-
-.palette-color.transparent {
-  position: relative;
-  overflow: hidden;
-}
-
-.checkered-bg {
-  width: 100%;
-  height: 100%;
-  background-image:
-    linear-gradient(45deg, #E0E0E0 25%, transparent 25%),
-    linear-gradient(-45deg, #E0E0E0 25%, transparent 25%),
-    linear-gradient(45deg, transparent 75%, #E0E0E0 75%),
-    linear-gradient(-45deg, transparent 75%, #E0E0E0 75%);
-  background-size: 10px 10px;
-  background-position: 0 0, 0 5px, 5px -5px, -5px 0px;
-}
-
-.color-info {
-  margin-top: 1rem;
-  padding: 0.75rem;
-  background: #f9f9f9;
-  border-radius: 4px;
-  text-align: center;
-}
-
-.save-panel {
-  background: white;
-  padding: 1.5rem;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-}
-
-.save-panel h3 {
-  margin-bottom: 1rem;
-  color: #333;
-}
-
-.form-group {
-  margin-bottom: 1rem;
-}
-
-.form-group label {
-  display: block;
-  margin-bottom: 0.5rem;
-  font-weight: 500;
-  color: #333;
-}
-
-.form-group input,
-.form-group textarea {
-  width: 100%;
-  padding: 0.75rem;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 1rem;
-}
-
-.form-group textarea {
-  min-height: 80px;
-  resize: vertical;
-  font-family: inherit;
-}
-
-.error-message {
-  margin-top: 1rem;
-  padding: 0.75rem;
-  background: #fee;
-  color: #c33;
-  border-radius: 4px;
-}
-
-/* Grid Controls */
-.grid-controls {
-  background: white;
-  padding: 1.5rem;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-  margin-bottom: 2rem;
-}
-
-.grid-controls h3 {
-  margin-bottom: 1rem;
-  color: #333;
-  text-align: center;
-}
-
-.controls-layout {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.control-row {
-  display: flex;
-  gap: 0.5rem;
-  align-items: center;
-}
-
-.grid-info {
-  min-width: 80px;
-  text-align: center;
-  font-weight: bold;
-  color: #667eea;
-  padding: 0.5rem;
-}
-
-.btn-add {
-  background: #e6f7e6;
-  border-color: #28a745;
-  color: #28a745;
-}
-
-.btn-add:hover:not(:disabled) {
-  background: #28a745;
-  color: white;
-}
-
-.btn-remove {
-  background: #ffe6e6;
-  border-color: #dc3545;
-  color: #dc3545;
-}
-
-.btn-remove:hover:not(:disabled) {
-  background: #dc3545;
-  color: white;
 }
 
 /* Eyedropper color info display */
@@ -1079,11 +859,5 @@ canvas {
   font-size: 0.85rem;
   opacity: 0.8;
   font-family: monospace;
-}
-
-/* Brush size buttons */
-.btn-brush-size {
-  min-width: 50px;
-  font-size: 0.85rem;
 }
 </style>

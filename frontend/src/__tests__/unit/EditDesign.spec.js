@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { mount, flushPromises as vueFlushPromises } from '@vue/test-utils'
 import { nextTick } from 'vue'
-import EditDesign from '@/views/EditDesign.vue'
+import Designer from '@/views/Designer.vue'
 import { TRANSPARENT, allDMCColors } from '@/utils/dmcColors'
 import { designsAPI } from '@/api/client'
 import { createMockRouter, createMockRoute, createMouseEvent, createKeyboardEvent, flushPromises } from '../helpers/testUtils'
@@ -52,7 +52,7 @@ describe('EditDesign.vue', () => {
       data: createMockDesign()
     })
 
-    wrapper = mount(EditDesign, {
+    wrapper = mount(Designer, {
       global: {
         stubs: {
           'router-link': {
@@ -83,7 +83,7 @@ describe('EditDesign.vue', () => {
 
     it('shows loading state initially', async () => {
       // Create new wrapper to catch initial loading state
-      const loadingWrapper = mount(EditDesign, {
+      const loadingWrapper = mount(Designer, {
         global: {
           mocks: {
             $router: mockRouter,
@@ -186,7 +186,7 @@ describe('EditDesign.vue', () => {
         data: createMockDesign({ description: null })
       })
 
-      const newWrapper = mount(EditDesign, {
+      const newWrapper = mount(Designer, {
         global: {
           mocks: {
             $router: mockRouter,
@@ -218,7 +218,7 @@ describe('EditDesign.vue', () => {
         })
       })
 
-      const newWrapper = mount(EditDesign, {
+      const newWrapper = mount(Designer, {
         global: {
           mocks: {
             $router: mockRouter,
@@ -246,7 +246,7 @@ describe('EditDesign.vue', () => {
     it('shows error state on loading failure', async () => {
       designsAPI.getById.mockRejectedValue(new Error('Network error'))
 
-      const errorWrapper = mount(EditDesign, {
+      const errorWrapper = mount(Designer, {
         global: {
           mocks: {
             $router: mockRouter,
@@ -266,7 +266,7 @@ describe('EditDesign.vue', () => {
     it('displays error message on loading failure', async () => {
       designsAPI.getById.mockRejectedValue(new Error('Not found'))
 
-      const errorWrapper = mount(EditDesign, {
+      const errorWrapper = mount(Designer, {
         global: {
           mocks: {
             $router: mockRouter,
@@ -287,7 +287,7 @@ describe('EditDesign.vue', () => {
     it('hides loading spinner on error', async () => {
       designsAPI.getById.mockRejectedValue(new Error('Network error'))
 
-      const errorWrapper = mount(EditDesign, {
+      const errorWrapper = mount(Designer, {
         global: {
           mocks: {
             $router: mockRouter,
@@ -307,7 +307,7 @@ describe('EditDesign.vue', () => {
     it('does not render canvas on error', async () => {
       designsAPI.getById.mockRejectedValue(new Error('Network error'))
 
-      const errorWrapper = mount(EditDesign, {
+      const errorWrapper = mount(Designer, {
         global: {
           mocks: {
             $router: mockRouter,
@@ -338,7 +338,7 @@ describe('EditDesign.vue', () => {
         })
       })
 
-      const newWrapper = mount(EditDesign, {
+      const newWrapper = mount(Designer, {
         global: {
           mocks: {
             $router: mockRouter,
@@ -382,7 +382,7 @@ describe('EditDesign.vue', () => {
         })
       })
 
-      const newWrapper = mount(EditDesign, {
+      const newWrapper = mount(Designer, {
         global: {
           mocks: {
             $router: mockRouter,
@@ -416,7 +416,7 @@ describe('EditDesign.vue', () => {
         })
       })
 
-      const newWrapper = mount(EditDesign, {
+      const newWrapper = mount(Designer, {
         global: {
           mocks: {
             $router: mockRouter,
@@ -451,7 +451,7 @@ describe('EditDesign.vue', () => {
 
       designsAPI.getById.mockRejectedValue(new Error('Test error'))
 
-      const errorWrapper = mount(EditDesign, {
+      const errorWrapper = mount(Designer, {
         global: {
           mocks: {
             $router: mockRouter,
@@ -479,7 +479,7 @@ describe('EditDesign.vue', () => {
         })
       })
 
-      const newWrapper = mount(EditDesign, {
+      const newWrapper = mount(Designer, {
         global: {
           mocks: {
             $router: mockRouter,
@@ -521,7 +521,7 @@ describe('EditDesign.vue', () => {
         })
       })
 
-      const newWrapper = mount(EditDesign, {
+      const newWrapper = mount(Designer, {
         global: {
           mocks: {
             $router: mockRouter,
@@ -570,7 +570,7 @@ describe('EditDesign.vue', () => {
         })
       })
 
-      const newWrapper = mount(EditDesign, {
+      const newWrapper = mount(Designer, {
         global: {
           mocks: {
             $router: mockRouter,
@@ -606,7 +606,7 @@ describe('EditDesign.vue', () => {
         })
       })
 
-      const newWrapper = mount(EditDesign, {
+      const newWrapper = mount(Designer, {
         global: {
           mocks: {
             $router: mockRouter,
@@ -638,7 +638,7 @@ describe('EditDesign.vue', () => {
         })
       })
 
-      const newWrapper = mount(EditDesign, {
+      const newWrapper = mount(Designer, {
         global: {
           mocks: {
             $router: mockRouter,
@@ -674,7 +674,7 @@ describe('EditDesign.vue', () => {
         })
       })
 
-      const newWrapper = mount(EditDesign, {
+      const newWrapper = mount(Designer, {
         global: {
           mocks: {
             $router: mockRouter,
@@ -711,7 +711,7 @@ describe('EditDesign.vue', () => {
         })
       })
 
-      const newWrapper = mount(EditDesign, {
+      const newWrapper = mount(Designer, {
         global: {
           mocks: {
             $router: mockRouter,
@@ -747,7 +747,7 @@ describe('EditDesign.vue', () => {
         })
       })
 
-      const newWrapper = mount(EditDesign, {
+      const newWrapper = mount(Designer, {
         global: {
           mocks: {
             $router: mockRouter,
@@ -780,7 +780,7 @@ describe('EditDesign.vue', () => {
         })
       })
 
-      const newWrapper = mount(EditDesign, {
+      const newWrapper = mount(Designer, {
         global: {
           mocks: {
             $router: mockRouter,
@@ -812,7 +812,7 @@ describe('EditDesign.vue', () => {
         })
       })
 
-      const newWrapper = mount(EditDesign, {
+      const newWrapper = mount(Designer, {
         global: {
           mocks: {
             $router: mockRouter,
@@ -843,7 +843,7 @@ describe('EditDesign.vue', () => {
         })
       })
 
-      const newWrapper = mount(EditDesign, {
+      const newWrapper = mount(Designer, {
         global: {
           mocks: {
             $router: mockRouter,
@@ -877,7 +877,7 @@ describe('EditDesign.vue', () => {
         })
       })
 
-      const newWrapper = mount(EditDesign, {
+      const newWrapper = mount(Designer, {
         global: {
           mocks: {
             $router: mockRouter,
@@ -910,7 +910,7 @@ describe('EditDesign.vue', () => {
         })
       })
 
-      const newWrapper = mount(EditDesign, {
+      const newWrapper = mount(Designer, {
         global: {
           mocks: {
             $router: mockRouter,
@@ -947,7 +947,7 @@ describe('EditDesign.vue', () => {
         })
       })
 
-      const newWrapper = mount(EditDesign, {
+      const newWrapper = mount(Designer, {
         global: {
           mocks: {
             $router: mockRouter,
@@ -979,7 +979,7 @@ describe('EditDesign.vue', () => {
         })
       })
 
-      const newWrapper = mount(EditDesign, {
+      const newWrapper = mount(Designer, {
         global: {
           mocks: {
             $router: mockRouter,
@@ -1016,7 +1016,7 @@ describe('EditDesign.vue', () => {
         })
       })
 
-      const newWrapper = mount(EditDesign, {
+      const newWrapper = mount(Designer, {
         global: {
           mocks: {
             $router: mockRouter,
@@ -1050,7 +1050,7 @@ describe('EditDesign.vue', () => {
         })
       })
 
-      const newWrapper = mount(EditDesign, {
+      const newWrapper = mount(Designer, {
         global: {
           mocks: {
             $router: mockRouter,
@@ -1081,7 +1081,7 @@ describe('EditDesign.vue', () => {
         })
       })
 
-      const newWrapper = mount(EditDesign, {
+      const newWrapper = mount(Designer, {
         global: {
           mocks: {
             $router: mockRouter,
@@ -1114,7 +1114,7 @@ describe('EditDesign.vue', () => {
         })
       })
 
-      const newWrapper = mount(EditDesign, {
+      const newWrapper = mount(Designer, {
         global: {
           mocks: {
             $router: mockRouter,
@@ -1149,7 +1149,7 @@ describe('EditDesign.vue', () => {
         })
       })
 
-      const newWrapper = mount(EditDesign, {
+      const newWrapper = mount(Designer, {
         global: {
           mocks: {
             $router: mockRouter,
@@ -1182,7 +1182,7 @@ describe('EditDesign.vue', () => {
       const vm = wrapper.vm
 
       vm.title = ''
-      await vm.updateDesign()
+      await vm.saveDesign()
 
       expect(vm.saveError).toBe('Please enter a title')
     })
@@ -1191,7 +1191,7 @@ describe('EditDesign.vue', () => {
       const vm = wrapper.vm
 
       vm.title = '   '
-      await vm.updateDesign()
+      await vm.saveDesign()
 
       expect(vm.saveError).toBe('Please enter a title')
     })
@@ -1202,7 +1202,7 @@ describe('EditDesign.vue', () => {
       designsAPI.update.mockResolvedValue({ data: {} })
 
       vm.title = 'Updated Title'
-      await vm.updateDesign()
+      await vm.saveDesign()
 
       expect(designsAPI.update).toHaveBeenCalledWith(
         '1',
@@ -1220,7 +1220,7 @@ describe('EditDesign.vue', () => {
       vm.title = 'New Title'
       vm.description = 'New Description'
 
-      await vm.updateDesign()
+      await vm.saveDesign()
 
       const callArg = designsAPI.update.mock.calls[0][1]
       expect(callArg.title).toBe('New Title')
@@ -1233,7 +1233,7 @@ describe('EditDesign.vue', () => {
       designsAPI.update.mockResolvedValue({ data: {} })
 
       vm.grid[0][0] = '#ABCDEF'
-      await vm.updateDesign()
+      await vm.saveDesign()
 
       const callArg = designsAPI.update.mock.calls[0][1]
       const designData = JSON.parse(callArg.design_data)
@@ -1246,7 +1246,7 @@ describe('EditDesign.vue', () => {
 
       designsAPI.update.mockResolvedValue({ data: {} })
 
-      await vm.updateDesign()
+      await vm.saveDesign()
 
       const callArg = designsAPI.update.mock.calls[0][1]
       expect(callArg.width).toBe(vm.gridWidth)
@@ -1261,7 +1261,7 @@ describe('EditDesign.vue', () => {
       vm.grid[0][0] = '#FF0000'
       vm.grid[0][1] = '#00FF00'
 
-      await vm.updateDesign()
+      await vm.saveDesign()
 
       const callArg = designsAPI.update.mock.calls[0][1]
       const designData = JSON.parse(callArg.design_data)
@@ -1278,7 +1278,7 @@ describe('EditDesign.vue', () => {
       vm.grid[0][0] = '#FF0000'
       vm.grid[0][1] = TRANSPARENT
 
-      await vm.updateDesign()
+      await vm.saveDesign()
 
       const callArg = designsAPI.update.mock.calls[0][1]
       const designData = JSON.parse(callArg.design_data)
@@ -1291,7 +1291,7 @@ describe('EditDesign.vue', () => {
 
       designsAPI.update.mockResolvedValue({ data: {} })
 
-      await vm.updateDesign()
+      await vm.saveDesign()
       await flushPromises()
 
       expect(mockRouter.push).toHaveBeenCalledWith('/designs')
@@ -1305,7 +1305,7 @@ describe('EditDesign.vue', () => {
         resolve({ data: {} })
       }))
 
-      await vm.updateDesign()
+      await vm.saveDesign()
     })
 
     it('clears saving state after update', async () => {
@@ -1313,7 +1313,7 @@ describe('EditDesign.vue', () => {
 
       designsAPI.update.mockResolvedValue({ data: {} })
 
-      await vm.updateDesign()
+      await vm.saveDesign()
 
       expect(vm.saving).toBe(false)
     })
@@ -1325,7 +1325,7 @@ describe('EditDesign.vue', () => {
         response: { data: { detail: 'Validation error' } }
       })
 
-      await vm.updateDesign()
+      await vm.saveDesign()
 
       expect(vm.saveError).toBe('Validation error')
     })
@@ -1335,7 +1335,7 @@ describe('EditDesign.vue', () => {
 
       designsAPI.update.mockRejectedValue(new Error('Network error'))
 
-      await vm.updateDesign()
+      await vm.saveDesign()
 
       expect(vm.saveError).toBe('Failed to update design')
     })
@@ -1357,7 +1357,7 @@ describe('EditDesign.vue', () => {
         response: { status: 404, data: { detail: 'Not found' } }
       })
 
-      const errorWrapper = mount(EditDesign, {
+      const errorWrapper = mount(Designer, {
         global: {
           mocks: {
             $router: mockRouter,
@@ -1377,7 +1377,7 @@ describe('EditDesign.vue', () => {
     it('handles network error on load', async () => {
       designsAPI.getById.mockRejectedValue(new Error('Network error'))
 
-      const errorWrapper = mount(EditDesign, {
+      const errorWrapper = mount(Designer, {
         global: {
           mocks: {
             $router: mockRouter,
@@ -1404,7 +1404,7 @@ describe('EditDesign.vue', () => {
         }
       })
 
-      const errorWrapper = mount(EditDesign, {
+      const errorWrapper = mount(Designer, {
         global: {
           mocks: {
             $router: mockRouter,
@@ -1432,7 +1432,7 @@ describe('EditDesign.vue', () => {
         }
       })
 
-      const errorWrapper = mount(EditDesign, {
+      const errorWrapper = mount(Designer, {
         global: {
           mocks: {
             $router: mockRouter,
@@ -1454,7 +1454,7 @@ describe('EditDesign.vue', () => {
 
       designsAPI.update.mockRejectedValue(new Error('Network error'))
 
-      await vm.updateDesign()
+      await vm.saveDesign()
 
       expect(vm.saveError).toBe('Failed to update design')
       expect(vm.saving).toBe(false)
@@ -1467,7 +1467,7 @@ describe('EditDesign.vue', () => {
         response: { status: 403, data: { detail: 'Forbidden' } }
       })
 
-      await vm.updateDesign()
+      await vm.saveDesign()
 
       expect(vm.saveError).toBe('Forbidden')
     })
@@ -1479,7 +1479,7 @@ describe('EditDesign.vue', () => {
         response: { status: 500, data: { detail: 'Server error' } }
       })
 
-      await vm.updateDesign()
+      await vm.saveDesign()
 
       expect(vm.saveError).toBe('Server error')
     })
@@ -1490,7 +1490,7 @@ describe('EditDesign.vue', () => {
       vm.saveError = 'Previous error'
       designsAPI.update.mockResolvedValue({ data: {} })
 
-      await vm.updateDesign()
+      await vm.saveDesign()
 
       // Initially cleared
       expect(vm.saveError).toBe(null)
@@ -1503,7 +1503,7 @@ describe('EditDesign.vue', () => {
         response: { data: { detail: 'Test error' } }
       })
 
-      await vm.updateDesign()
+      await vm.saveDesign()
       await nextTick()
 
       const errorMsg = wrapper.find('.save-panel .error-message')
@@ -1519,7 +1519,7 @@ describe('EditDesign.vue', () => {
         message: 'timeout'
       })
 
-      await vm.updateDesign()
+      await vm.saveDesign()
 
       expect(vm.saveError).toBe('Failed to update design')
     })
@@ -1531,7 +1531,7 @@ describe('EditDesign.vue', () => {
 
       designsAPI.update.mockRejectedValue(new Error('Failed'))
 
-      await vm.updateDesign()
+      await vm.saveDesign()
 
       // Grid should remain unchanged
       expect(vm.grid[0][0]).toBe('#SPECIAL')
@@ -1545,7 +1545,7 @@ describe('EditDesign.vue', () => {
 
       designsAPI.update.mockRejectedValue(new Error('Failed'))
 
-      await vm.updateDesign()
+      await vm.saveDesign()
 
       // Form data should remain
       expect(vm.title).toBe('Important Title')
@@ -1557,7 +1557,7 @@ describe('EditDesign.vue', () => {
 
       designsAPI.update.mockRejectedValue(new Error('Failed'))
 
-      await vm.updateDesign()
+      await vm.saveDesign()
       await flushPromises()
 
       expect(mockRouter.push).not.toHaveBeenCalled()
@@ -1568,7 +1568,7 @@ describe('EditDesign.vue', () => {
 
       designsAPI.update.mockRejectedValue(new Error('Unknown error'))
 
-      await vm.updateDesign()
+      await vm.saveDesign()
 
       expect(vm.saveError).toBe('Failed to update design')
     })
@@ -1578,7 +1578,7 @@ describe('EditDesign.vue', () => {
 
       designsAPI.getById.mockRejectedValue(new Error('Load error'))
 
-      const errorWrapper = mount(EditDesign, {
+      const errorWrapper = mount(Designer, {
         global: {
           mocks: {
             $router: mockRouter,
