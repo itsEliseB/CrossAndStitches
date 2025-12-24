@@ -6,13 +6,12 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 
-// Import page components (will create these next)
+// Import page components
 import Home from '../views/Home.vue'
 import Login from '../views/Login.vue'
 import Register from '../views/Register.vue'
 import Designs from '../views/Designs.vue'
-import CreateDesign from '../views/CreateDesign.vue'
-import EditDesign from '../views/EditDesign.vue'
+import Designer from '../views/Designer.vue'
 import ImportImage from '../views/ImportImage.vue'
 
 // Define routes
@@ -42,15 +41,15 @@ const routes = [
     meta: { requiresAuth: true },
   },
   {
-    path: '/create',
+    path: '/designs/create',
     name: 'CreateDesign',
-    component: CreateDesign,
+    component: Designer,
     meta: { requiresAuth: true },
   },
   {
-    path: '/design/:id',
+    path: '/designs/:id/edit',
     name: 'EditDesign',
-    component: EditDesign,
+    component: Designer,
     meta: { requiresAuth: true },
   },
   {
