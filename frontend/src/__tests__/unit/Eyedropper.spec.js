@@ -1,9 +1,9 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { nextTick } from 'vue'
-import CreateDesign from '@/views/CreateDesign.vue'
+import { createRouter, createMemoryHistory } from 'vue-router'
+import Designer from '@/views/Designer.vue'
 import { TRANSPARENT } from '@/utils/dmcColors'
-import { createMockRouter } from '../helpers/testUtils'
 
 // Mock the API client
 vi.mock('@/api/client', () => ({
@@ -14,16 +14,21 @@ vi.mock('@/api/client', () => ({
 
 describe('Eyedropper Tool', () => {
   let wrapper
-  let mockRouter
+  let router
 
   beforeEach(async () => {
-    mockRouter = createMockRouter()
+    // Create a real router instance for testing
+    router = createRouter({
+      history: createMemoryHistory(),
+      routes: [
+        { path: '/', component: { template: '<div>Home</div>' } },
+        { path: '/designs', component: { template: '<div>Designs</div>' } }
+      ]
+    })
 
-    wrapper = mount(CreateDesign, {
+    wrapper = mount(Designer, {
       global: {
-        mocks: {
-          $router: mockRouter
-        }
+        plugins: [router]
       }
     })
 
