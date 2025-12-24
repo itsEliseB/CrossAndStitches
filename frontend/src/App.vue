@@ -124,8 +124,7 @@ authStore.checkAuth()
 
 /* Main Content Area */
 .main-content {
-  max-width: 1200px;
-  margin: 2rem auto;
-  padding: 0 2rem;
+  margin: 0;
+  padding: 0 ;
 }
 </style>
