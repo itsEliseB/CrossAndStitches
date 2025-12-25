@@ -7,7 +7,7 @@
   <div class="designs-page">
     <div class="page-header">
       <h1>My Designs</h1>
-      <router-link to="/create" class="btn btn-primary">
+      <router-link to="designs/new" class="btn btn-primary">
         + Create New Design
       </router-link>
     </div>
@@ -51,7 +51,7 @@
 
         <div class="design-actions">
           <router-link
-            :to="`/design/${design.id}`"
+            :to="`/designs/${design.id}/edit`"
             class="btn btn-small"
           >
             Edit
