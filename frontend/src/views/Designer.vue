@@ -13,74 +13,77 @@
     <div v-else-if="isEditMode && error" class="error-message">{{ error }}</div>
 
     <!-- Main designer interface -->
-    <div v-else>
-      
-      <!-- <h1>{{ isEditMode ? `Edit Design: ${title}` : 'Create New Design' }}</h1> -->
-            <!-- Save Panel Component -->
-      <SavePanel
-        v-model:title="title"
-        v-model:description="description"
-        :saving="saving"
-        :save-error="saveError"
-        :panel-title="isEditMode ? 'Update Design' : 'Save Design'"
-        :save-button-text="isEditMode ? 'Update Design' : 'Save Design'"
-        :title-placeholder="isEditMode ? '' : 'My Cross-Stitch Pattern'"
-        :description-placeholder="isEditMode ? '' : 'Optional description'"
-        :show-cancel="isEditMode"
-        :can-undo="canUndo"
-        :can-redo="canRedo" 
-        @save="saveDesign"
-        @undo="undo"
-        @redo="redo"
-      />
+    <div v-else class="designer-container">
+      <!-- Header: Toolbar with title, actions, save button -->
+      <header class="designer-header">
+        <SavePanel
+          v-model:title="title"
+          v-model:description="description"
+          :saving="saving"
+          :save-error="saveError"
+          :panel-title="isEditMode ? 'Update Design' : 'Save Design'"
+          :save-button-text="isEditMode ? 'Update Design' : 'Save Design'"
+          :title-placeholder="isEditMode ? '' : 'My Cross-Stitch Pattern'"
+          :description-placeholder="isEditMode ? '' : 'Optional description'"
+          :show-cancel="isEditMode"
+          :can-undo="canUndo"
+          :can-redo="canRedo"
+          @save="saveDesign"
+          @undo="undo"
+          @redo="redo"
+        />
+      </header>
 
-      <!-- Settings Panel Component -->
-      <SettingsPanel
-        v-model:currentColor="currentColor"
-        v-model:tool="tool"
-        v-model:brushSize="brushSize"
-        v-model:gridWidth="gridWidth"
-        v-model:gridHeight="gridHeight"
-        :hovered-color-info="hoveredColorInfo"
-        :show-clear-button="!isEditMode"
-        :show-grid-size="!isEditMode"
-        @clear-grid="clearGrid"
-        @resize="resizeGrid"
-      />
+      <!-- Content layout: main canvas + aside tools -->
+      <div class="designer-layout">
+        <!-- Aside: Tools and palette -->
+        <aside class="tools-sidebar">
+          <SettingsPanel
+            v-model:currentColor="currentColor"
+            v-model:tool="tool"
+            v-model:brushSize="brushSize"
+            v-model:gridWidth="gridWidth"
+            v-model:gridHeight="gridHeight"
+            :hovered-color-info="hoveredColorInfo"
+            :show-clear-button="!isEditMode"
+            :show-grid-size="!isEditMode"
+            @clear-grid="clearGrid"
+            @resize="resizeGrid"
+          />
 
-    <!-- Grid Controls Component -->
-    <GridControls
-      :grid-width="gridWidth"
-      :grid-height="gridHeight"
-      @add-row-top="addRowTop"
-      @remove-row-top="removeRowTop"
-      @add-row-bottom="addRowBottom"
-      @remove-row-bottom="removeRowBottom"
-      @add-column-left="addColumnLeft"
-      @remove-column-left="removeColumnLeft"
-      @add-column-right="addColumnRight"
-      @remove-column-right="removeColumnRight"
-    />
+          <ColorPalette
+            v-model:currentColor="currentColor"
+            :palette-colors="paletteColors"
+          />
+        </aside>
 
-    <!-- Canvas Drawing Area -->
-    <div class="canvas-container">
-      <canvas
-        ref="canvasRef"
-        @mousedown="startDrawing"
-        @mousemove="handleMouseMove"
-        @mouseup="stopDrawing"
-        @mouseleave="handleMouseLeave"
-        @click="drawPixel"
-      ></canvas>
-    </div>
+        <!-- Main: Canvas area -->
+        <main class="canvas-area">
+          <GridControls
+            :grid-width="gridWidth"
+            :grid-height="gridHeight"
+            @add-row-top="addRowTop"
+            @remove-row-top="removeRowTop"
+            @add-row-bottom="addRowBottom"
+            @remove-row-bottom="removeRowBottom"
+            @add-column-left="addColumnLeft"
+            @remove-column-left="removeColumnLeft"
+            @add-column-right="addColumnRight"
+            @remove-column-right="removeColumnRight"
+          />
 
-    <!-- Color Palette Component -->
-    <ColorPalette
-      v-model:currentColor="currentColor"
-      :palette-colors="paletteColors"
-    />
-
-
+          <div class="canvas-container">
+            <canvas
+              ref="canvasRef"
+              @mousedown="startDrawing"
+              @mousemove="handleMouseMove"
+              @mouseup="stopDrawing"
+              @mouseleave="handleMouseLeave"
+              @click="drawPixel"
+            ></canvas>
+          </div>
+        </main>
+      </div>
     </div>
   </div>
 </template>
@@ -743,15 +746,15 @@ onMounted(async () => {
 </script>
 
 <style scoped>
+/* Page container */
 .designer-page {
-  padding: 2rem 0;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: #f5f5f5;
 }
 
-h1 {
-  margin-bottom: 2rem;
-  color: #333;
-}
-
+/* Loading and error states */
 .loading {
   padding: 2rem;
   text-align: center;
@@ -764,31 +767,53 @@ h1 {
   background: #fee;
   color: #c33;
   border-radius: 4px;
-  margin: 2rem 0;
+  margin: 2rem;
 }
 
-.btn {
-  padding: 0.5rem 1rem;
-  border: 1px solid #ddd;
+/* Designer container */
+.designer-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* Header */
+.designer-header {
+  flex-shrink: 0;
+}
+
+/* Layout wrapper for main + aside */
+.designer-layout {
+  display: grid;
+  grid-template-columns: 350px 1fr;
+  gap: 0;
+  flex: 1;
+  overflow: hidden;
+  min-height: 0;
+}
+
+/* Main canvas area */
+.canvas-area {
+  display: flex;
+  flex-direction: column;
+  background: #fafafa;
+  overflow: auto;
+  padding: 1rem;
+}
+
+/* Aside tools sidebar */
+.tools-sidebar {
   background: white;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: all 0.2s;
+  border-left: 1px solid #e0e0e0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1rem;
 }
 
-.btn:hover {
-  background: #f5f5f5;
-}
-
-.btn-small {
-  font-size: 0.9rem;
-}
-
-.btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
+/* Canvas container */
 .canvas-container {
   background: white;
   padding: 2rem;
