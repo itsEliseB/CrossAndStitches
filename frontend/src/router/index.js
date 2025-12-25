@@ -41,7 +41,7 @@ const routes = [
     meta: { requiresAuth: true },
   },
   {
-    path: '/designs/create',
+    path: '/designs/new',
     name: 'CreateDesign',
     component: Designer,
     meta: { requiresAuth: true },

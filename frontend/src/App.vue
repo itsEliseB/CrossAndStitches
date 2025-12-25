@@ -16,7 +16,7 @@
           <template v-if="authStore.isAuthenticated">
             <!-- Logged in: show design links -->
             <router-link to="/designs" class="nav-link">My Designs</router-link>
-            <router-link to="/create" class="nav-link">Create New</router-link>
+            <router-link to="/designs/new" class="nav-link">Create New</router-link>
             <router-link to="/import" class="nav-link">Import Image</router-link>
             <span class="nav-user">{{ authStore.user?.username }}</span>
             <button @click="handleLogout" class="nav-button">Logout</button>
