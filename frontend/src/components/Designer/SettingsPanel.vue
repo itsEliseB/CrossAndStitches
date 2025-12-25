@@ -88,7 +88,7 @@
       </div>
     </div>
 
-    <div class="setting-group">
+    <!-- <div class="setting-group">
       <label>History:</label>
       <button
         @click="$emit('undo')"
@@ -106,7 +106,7 @@
       >
         ↷ Redo
       </button>
-    </div>
+    </div> -->
 
     <div v-if="showClearButton" class="setting-group">
       <button @click="$emit('clearGrid')" class="btn btn-small">
@@ -134,14 +134,14 @@ defineProps({
     type: Object,
     default: null
   },
-  canUndo: {
-    type: Boolean,
-    required: true
-  },
-  canRedo: {
-    type: Boolean,
-    required: true
-  },
+  // canUndo: {
+  //   type: Boolean,
+  //   required: true
+  // },
+  // canRedo: {
+  //   type: Boolean,
+  //   required: true
+  // },
   showClearButton: {
     type: Boolean,
     default: false
@@ -160,7 +160,7 @@ defineProps({
   }
 })
 
-defineEmits(['update:currentColor', 'update:tool', 'update:brushSize', 'undo', 'redo', 'clearGrid', 'update:gridWidth', 'update:gridHeight', 'resize'])
+defineEmits(['update:currentColor', 'update:tool', 'update:brushSize', 'clearGrid', 'update:gridWidth', 'update:gridHeight', 'resize'])
 </script>
 
 <style scoped>

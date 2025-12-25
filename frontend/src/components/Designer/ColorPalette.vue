@@ -31,7 +31,7 @@
 </template>
 
 <script setup>
-import { allDMCColors, TRANSPARENT } from '../utils/dmcColors'
+import { allDMCColors, TRANSPARENT } from '../../utils/dmcColors'
 
 defineProps({
   currentColor: {
