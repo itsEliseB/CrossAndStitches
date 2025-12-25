@@ -14,7 +14,25 @@
 
     <!-- Main designer interface -->
     <div v-else>
-      <h1>{{ isEditMode ? `Edit Design: ${title}` : 'Create New Design' }}</h1>
+      
+      <!-- <h1>{{ isEditMode ? `Edit Design: ${title}` : 'Create New Design' }}</h1> -->
+            <!-- Save Panel Component -->
+      <SavePanel
+        v-model:title="title"
+        v-model:description="description"
+        :saving="saving"
+        :save-error="saveError"
+        :panel-title="isEditMode ? 'Update Design' : 'Save Design'"
+        :save-button-text="isEditMode ? 'Update Design' : 'Save Design'"
+        :title-placeholder="isEditMode ? '' : 'My Cross-Stitch Pattern'"
+        :description-placeholder="isEditMode ? '' : 'Optional description'"
+        :show-cancel="isEditMode"
+        :can-undo="canUndo"
+        :can-redo="canRedo" 
+        @save="saveDesign"
+        @undo="undo"
+        @redo="redo"
+      />
 
       <!-- Settings Panel Component -->
       <SettingsPanel
@@ -24,12 +42,8 @@
         v-model:gridWidth="gridWidth"
         v-model:gridHeight="gridHeight"
         :hovered-color-info="hoveredColorInfo"
-        :can-undo="canUndo"
-        :can-redo="canRedo"
         :show-clear-button="!isEditMode"
         :show-grid-size="!isEditMode"
-        @undo="undo"
-        @redo="redo"
         @clear-grid="clearGrid"
         @resize="resizeGrid"
       />
@@ -66,19 +80,7 @@
       :palette-colors="paletteColors"
     />
 
-      <!-- Save Panel Component -->
-      <SavePanel
-        v-model:title="title"
-        v-model:description="description"
-        :saving="saving"
-        :save-error="saveError"
-        :panel-title="isEditMode ? 'Update Design' : 'Save Design'"
-        :save-button-text="isEditMode ? 'Update Design' : 'Save Design'"
-        :title-placeholder="isEditMode ? '' : 'My Cross-Stitch Pattern'"
-        :description-placeholder="isEditMode ? '' : 'Optional description'"
-        :show-cancel="isEditMode"
-        @save="saveDesign"
-      />
+
     </div>
   </div>
 </template>
@@ -88,10 +90,10 @@ import { ref, onMounted, nextTick, computed, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { designsAPI } from '../api/client'
 import { allDMCColors, TRANSPARENT, isTransparent, getColorDisplay } from '../utils/dmcColors'
-import SettingsPanel from '../components/SettingsPanel.vue'
-import GridControls from '../components/GridControls.vue'
-import ColorPalette from '../components/ColorPalette.vue'
-import SavePanel from '../components/SavePanel.vue'
+import SettingsPanel from '../components/Designer/SettingsPanel.vue'
+import GridControls from '../components/Designer/GridControls.vue'
+import ColorPalette from '../components/Designer/ColorPalette.vue'
+import SavePanel from '../components/Designer/SavePanel.vue'
 
 const route = useRoute()
 const router = useRouter()
