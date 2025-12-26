@@ -5,8 +5,8 @@
 
 <template>
   <div id="app">
-    <!-- Navigation Bar -->
-    <nav class="navbar">
+    <!-- Navigation Bar (hidden on designer routes) -->
+    <nav v-if="!isDesignerRoute" class="navbar">
       <div class="nav-container">
         <router-link to="/" class="nav-brand">
           ✂️ Cross-Stitch Designer
@@ -16,7 +16,7 @@
           <template v-if="authStore.isAuthenticated">
             <!-- Logged in: show design links -->
             <router-link to="/designs" class="nav-link">My Designs</router-link>
-            <router-link to="/create" class="nav-link">Create New</router-link>
+            <router-link to="/designs/new" class="nav-link">Create New</router-link>
             <router-link to="/import" class="nav-link">Import Image</router-link>
             <span class="nav-user">{{ authStore.user?.username }}</span>
             <button @click="handleLogout" class="nav-button">Logout</button>
@@ -40,12 +40,19 @@
 </template>
 
 <script setup>
+import { computed } from 'vue'
 import { useAuthStore } from './stores/auth'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 
 // Access stores and router
 const authStore = useAuthStore()
 const router = useRouter()
+const route = useRoute()
+
+// Check if current route is designer/editor
+const isDesignerRoute = computed(() => {
+  return route.path.includes('/designs/new') || route.path.includes('/edit')
+})
 
 // Handle logout
 const handleLogout = () => {
@@ -124,8 +131,7 @@ authStore.checkAuth()
 
 /* Main Content Area */
 .main-content {
-  /* max-width: 1200px; */
-  margin: 2rem auto;
-  padding: 0 2rem;
+  margin: 0;
+  padding: 0;
 }
 </style>
