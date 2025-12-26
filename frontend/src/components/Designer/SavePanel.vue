@@ -6,12 +6,12 @@
 <template>
   <div class="save-panel">
     <div class="panel-left">
-      <router-link v-if="showCancel" to="/designs" class="btn btn-back">
+      <button @click="handleNavigateBack" class="btn btn-back">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
           <path d="M19 12H5M12 19l-7-7 7-7"/>
         </svg>
         <span>My Designs</span>
-      </router-link>
+      </button>
       <div class="title-group">
         <!-- Display mode: show title + edit button + dimensions -->
         <div v-if="!isEditingTitle" class="title-display">
@@ -62,26 +62,19 @@
       </button>
     </div>
 
-    <!-- Zoom controls -->
-    <div class="zoom-controls">
-      <button @click="$emit('zoom-out')" class="btn btn-small" title="Zoom out">−</button>
-      <span class="zoom-level">{{ zoom }}%</span>
-      <button @click="$emit('zoom-in')" class="btn btn-small" title="Zoom in">+</button>
-      <button @click="$emit('zoom-reset')" class="btn btn-small" title="Reset zoom">⟲</button>
-    </div>
-
     <button @click="$emit('save')" class="btn btn-primary" :disabled="saving">
       {{ saving ? 'Saving...' : saveButtonText }}
     </button>
-
-    <div v-if="saveError" class="error-message">{{ saveError }}</div>
   </div>
 </template>
 
 <script setup>
 import { ref, nextTick } from 'vue'
+import { useRouter } from 'vue-router'
 
-defineProps({
+const router = useRouter()
+
+const props = defineProps({
   title: {
     type: String,
     required: true
@@ -93,10 +86,6 @@ defineProps({
   saving: {
     type: Boolean,
     required: true
-  },
-  saveError: {
-    type: String,
-    default: null
   },
   panelTitle: {
     type: String,
@@ -116,7 +105,7 @@ defineProps({
   },
   showCancel: {
     type: Boolean,
-    default: false
+    default: true
   },
   canUndo: {
     type: Boolean,
@@ -130,13 +119,13 @@ defineProps({
     type: String,
     default: null
   },
-  zoom: {
-    type: Number,
-    required: true
+  hasUnsavedChanges: {
+    type: Boolean,
+    default: false
   },
 })
 
-defineEmits(['update:title', 'update:description', 'save', 'undo', 'redo', 'zoom-in', 'zoom-out', 'zoom-reset'])
+defineEmits(['update:title', 'update:description', 'save', 'undo', 'redo'])
 
 // Inline title editing
 const isEditingTitle = ref(false)
@@ -150,6 +139,19 @@ const startEditingTitle = async () => {
 
 const stopEditingTitle = () => {
   isEditingTitle.value = false
+}
+
+// Handle navigation back to designs list
+const handleNavigateBack = () => {
+  if (props.hasUnsavedChanges) {
+    const confirmed = confirm(
+      'You have unsaved changes. Are you sure you want to leave this page? Your changes will be lost.'
+    )
+    if (!confirmed) {
+      return
+    }
+  }
+  router.push('/designs')
 }
 </script>
 
@@ -242,24 +244,6 @@ const stopEditingTitle = () => {
   gap: 0.5rem;
 }
 
-/* Zoom controls */
-.zoom-controls {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0 0.5rem;
-  border-left: 1px solid #ddd;
-  border-right: 1px solid #ddd;
-}
-
-.zoom-level {
-  min-width: 45px;
-  text-align: center;
-  font-weight: 600;
-  color: #667eea;
-  font-size: 0.9rem;
-}
-
 .btn {
   padding: 0.5rem 1rem;
   border: 1px solid #ddd;
@@ -307,17 +291,5 @@ const stopEditingTitle = () => {
 
 .btn:disabled {
   cursor: not-allowed;
-}
-
-.error-message {
-  position: absolute;
-  top: 100%;
-  right: 0;
-  margin-top: 0.5rem;
-  padding: 0.75rem;
-  background: #fee;
-  color: #c33;
-  border-radius: 4px;
-  font-size: 0.9rem;
 }
 </style>
