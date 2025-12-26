@@ -51,6 +51,7 @@ defineEmits(['addRowTop', 'removeRowTop', 'addRowBottom', 'removeRowBottom', 'ad
   position: absolute;
   inset: 0;
   pointer-events: none;
+  margin:-1rem;
 }
 
 .control-edge {
@@ -61,25 +62,26 @@ defineEmits(['addRowTop', 'removeRowTop', 'addRowBottom', 'removeRowBottom', 'ad
 }
 
 .control-edge.top {
+  bottom: 100%;
   left: 50%;
   transform: translateX(-50%);
 }
 
 .control-edge.bottom {
-  bottom: 0px;
+  top: 100%;
   left: 50%;
   transform: translateX(-50%);
 }
 
 .control-edge.left {
-  left: 0;
+  right:100%;
   top: 50%;
   transform: translateY(-50%);
   flex-direction: column;
 }
 
 .control-edge.right {
-  right: 0;
+  left: 100%;
   top: 50%;
   transform: translateY(-50%);
   flex-direction: column;

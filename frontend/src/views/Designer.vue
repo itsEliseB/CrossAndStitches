@@ -26,23 +26,14 @@
 
       <!-- Header: Toolbar with title, actions, save button -->
       <header class="designer-header">
-        <SavePanel
-          v-model:title="title"
-          v-model:description="description"
-          :saving="saving"
+        <SavePanel v-model:title="title" v-model:description="description" :saving="saving"
           :panel-title="isEditMode ? 'Update Design' : 'Save Design'"
           :save-button-text="isEditMode ? 'Update Design' : 'Save Design'"
           :title-placeholder="isEditMode ? '' : 'My Cross-Stitch Pattern'"
-          :description-placeholder="isEditMode ? '' : 'Optional description'"
-          :show-cancel="isEditMode"
-          :can-undo="canUndo"
-          :can-redo="canRedo"
-          :grid-dimensions="`${gridHeight}×${gridWidth}`"
-          :has-unsaved-changes="hasUnsavedChanges"
-          @save="saveDesign"
-          @undo="undo"
-          @redo="redo"
-        />
+          :description-placeholder="isEditMode ? '' : 'Optional description'" :show-cancel="isEditMode"
+          :can-undo="canUndo" :can-redo="canRedo" :grid-dimensions="`${gridHeight}×${gridWidth}`"
+          :has-unsaved-changes="hasUnsavedChanges" :hovered-coordinates="hoveredCoordinatesDisplay"
+          @save="saveDesign" @undo="undo" @redo="redo" />
       </header>
 
       <!-- Content layout: main canvas + aside tools -->
@@ -50,52 +41,50 @@
         <!-- Aside: Tools and palette -->
         <aside class="tools-sidebar" :style="{ width: `${sidebarWidth}px` }">
           <div class="resize-handle" @mousedown="startResize"></div>
-          <SettingsPanel
-            v-model:currentColor="currentColor"
-            v-model:tool="tool"
-            v-model:brushSize="brushSize"
-            v-model:gridWidth="gridWidth"
-            v-model:gridHeight="gridHeight"
-            :hovered-color-info="hoveredColorInfo"
-            :show-clear-button="!isEditMode"
-            :show-grid-size="!isEditMode"
-            @clear-grid="clearGrid"
-            @resize="resizeGrid"
-          />
+          <SettingsPanel v-model:currentColor="currentColor" v-model:tool="tool" v-model:brushSize="brushSize"
+            v-model:gridWidth="gridWidth" v-model:gridHeight="gridHeight" :hovered-color-info="hoveredColorInfo"
+            :show-clear-button="!isEditMode" :show-grid-size="!isEditMode" @clear-grid="clearGrid"
+            @resize="resizeGrid" />
 
-          <ColorPalette
-            v-model:currentColor="currentColor"
-            :palette-colors="paletteColors"
-          />
+          <ColorPalette v-model:currentColor="currentColor" :palette-colors="paletteColors" />
         </aside>
 
         <!-- Main: Canvas area -->
         <main class="canvas-area">
-          <div class="canvas-wrapper">
+          <div class="canvas-wrapper" :style="canvasAreaStyle">
             <div class="canvas-container">
-                <canvas
-                  ref="canvasRef"
-                  :data-tool="tool"
-                  @mousedown="startDrawing"
-                  @mousemove="handleMouseMove"
-                  @mouseup="stopDrawing"
-                  @mouseleave="handleMouseLeave"
-                  @click="drawPixel"
-                ></canvas>
-            </div>
+              <div class="canvas-with-axes">
+                <!-- Top axis numbers -->
+                <div class="axis-top">
+                  <div class="axis-corner"></div>
+                  <div class="axis-numbers-horizontal">
+                    <span v-for="x in gridWidth" :key="`top-${x}`" :style="{ width: cellSize + 'px' }"
+                      class="axis-number">
+                      {{ x }}
+                    </span>
+                  </div>
+                </div>
 
-            <GridControls
-              :grid-width="gridWidth"
-              :grid-height="gridHeight"
-              @add-row-top="addRowTop"
-              @remove-row-top="removeRowTop"
-              @add-row-bottom="addRowBottom"
-              @remove-row-bottom="removeRowBottom"
-              @add-column-left="addColumnLeft"
-              @remove-column-left="removeColumnLeft"
-              @add-column-right="addColumnRight"
-              @remove-column-right="removeColumnRight"
-            />
+                <!-- Canvas row with left axis -->
+                <div class="canvas-row">
+                  <!-- Left axis numbers -->
+                  <div class="axis-left">
+                    <span v-for="y in gridHeight" :key="`left-${y}`" :style="{ height: cellSize + 'px' }"
+                      class="axis-number">
+                      {{ y }}
+                    </span>
+                  </div>
+
+                  <!-- Canvas -->
+                  <canvas ref="canvasRef" :data-tool="tool" @mousedown="startDrawing" @mousemove="handleMouseMove"
+                    @mouseup="stopDrawing" @mouseleave="handleMouseLeave" @click="drawPixel"></canvas>
+                </div>
+              </div>
+              <GridControls :grid-width="gridWidth" :grid-height="gridHeight" @add-row-top="addRowTop"
+                @remove-row-top="removeRowTop" @add-row-bottom="addRowBottom" @remove-row-bottom="removeRowBottom"
+                @add-column-left="addColumnLeft" @remove-column-left="removeColumnLeft"
+                @add-column-right="addColumnRight" @remove-column-right="removeColumnRight" />
+            </div>
           </div>
         </main>
       </div>
@@ -156,7 +145,7 @@ const resize = (e) => {
 // Grid settings
 const gridWidth = ref(30)
 const gridHeight = ref(30)
-const cellSize = ref(15)
+const cellSize = ref(30)
 
 // Panning functions for hand tool
 const startPanning = (event) => {
@@ -276,6 +265,42 @@ const hasUnsavedChanges = computed(() => {
   if (!lastSavedSnapshot.value) return true // No save yet
   const currentSnapshot = JSON.stringify(createSnapshot())
   return currentSnapshot !== lastSavedSnapshot.value
+})
+
+// Format hovered coordinates for display
+const hoveredCoordinatesDisplay = computed(() => {
+  if (!cursorPosition.value) return '(-, -)'
+  const { x, y } = cursorPosition.value
+  return `(${x + 1}, ${y + 1})`
+})
+
+// Calculate canvas-area minimum dimensions
+const canvasAreaStyle = computed(() => {
+  // Canvas dimensions
+  const canvasWidth = gridWidth.value * cellSize.value * 1.15
+  const canvasHeight = gridHeight.value * cellSize.value * 1.15
+
+  // Axis dimensions (from CSS)
+  const leftAxisWidth = 40 // from .axis-left
+  const leftAxisMargin = 6 // from .axis-left margin-right
+  const topAxisMargin = 6 // from .axis-numbers-horizontal margin-bottom
+
+  // Canvas container padding: 1rem 2rem 2rem 1rem = 16px 32px 32px 16px
+  const containerPaddingHorizontal = 32 + 16 // right + left
+  const containerPaddingVertical = 16 + 32 // top + bottom
+
+  // Calculate canvas-container dimensions
+  const containerWidth = canvasWidth + leftAxisWidth + leftAxisMargin + containerPaddingHorizontal
+  const containerHeight = canvasHeight + topAxisMargin + containerPaddingVertical
+
+  // Canvas-area min dimensions = container + 2rem (32px) + 32px
+  const minWidth = containerWidth + 32 + 32 // 2rem + 32px
+  const minHeight = containerHeight + 32 + 32 // 2rem + 32px
+
+  return {
+    minWidth: `${minWidth}px`,
+    minHeight: `${minHeight}px`
+  }
 })
 
 // DMC color palette + transparent option (all 454 colors)
@@ -521,15 +546,15 @@ const renderGrid = () => {
   for (let x = 0; x <= gridWidth.value; x++) {
     if (x % 10 === 0) {
       // Bold dark line every 10 columns
-      ctx.strokeStyle = '#666'
+      ctx.strokeStyle = '#444'
       ctx.lineWidth = 2
     } else if (x % 5 === 0) {
-      // Medium lighter line every 5 columns (but not 10)
-      ctx.strokeStyle = '#bbb'
+      // Medium line every 5 columns (but not 10)
+      ctx.strokeStyle = '#888'
       ctx.lineWidth = 1.5
     } else {
-      // Regular thin light line
-      ctx.strokeStyle = '#ddd'
+      // Regular thin line
+      ctx.strokeStyle = '#aaa'
       ctx.lineWidth = 1
     }
 
@@ -542,15 +567,15 @@ const renderGrid = () => {
   for (let y = 0; y <= gridHeight.value; y++) {
     if (y % 10 === 0) {
       // Bold dark line every 10 rows
-      ctx.strokeStyle = '#666'
+      ctx.strokeStyle = '#444'
       ctx.lineWidth = 2
     } else if (y % 5 === 0) {
-      // Medium lighter line every 5 rows (but not 10)
-      ctx.strokeStyle = '#bbb'
+      // Medium line every 5 rows (but not 10)
+      ctx.strokeStyle = '#888'
       ctx.lineWidth = 1.5
     } else {
-      // Regular thin light line
-      ctx.strokeStyle = '#ddd'
+      // Regular thin line
+      ctx.strokeStyle = '#aaa'
       ctx.lineWidth = 1
     }
 
@@ -576,7 +601,7 @@ const renderGrid = () => {
         const targetY = y + dy
 
         if (targetX >= 0 && targetX < gridWidth.value &&
-            targetY >= 0 && targetY < gridHeight.value) {
+          targetY >= 0 && targetY < gridHeight.value) {
           const cellX = targetX * cellSize.value
           const cellY = targetY * cellSize.value
           ctx.fillRect(cellX, cellY, cellSize.value, cellSize.value)
@@ -655,7 +680,7 @@ const applyBrush = (centerX, centerY, color) => {
 
       // Check bounds
       if (targetX >= 0 && targetX < gridWidth.value &&
-          targetY >= 0 && targetY < gridHeight.value) {
+        targetY >= 0 && targetY < gridHeight.value) {
         grid.value[targetY][targetX] = color
       }
     }
@@ -892,7 +917,11 @@ onMounted(async () => {
   // Setup canvas
   if (canvasRef.value) {
     ctx = canvasRef.value.getContext('2d')
+    console.log('Canvas initialized:', canvasRef.value, 'Grid size:', gridWidth.value, 'x', gridHeight.value)
     renderGrid()
+    console.log('Grid rendered')
+  } else {
+    console.error('Canvas ref not found!')
   }
 
   // Keyboard shortcuts for undo/redo
@@ -1002,6 +1031,7 @@ onMounted(async () => {
     transform: translateX(400px);
     opacity: 0;
   }
+
   to {
     transform: translateX(0);
     opacity: 1;
@@ -1033,13 +1063,9 @@ onMounted(async () => {
 
 /* Main canvas area */
 .canvas-area {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
   background: #fafafa;
-  overflow: auto;
+  overflow: scroll;
   padding: 1rem;
-  align-items: center;
 }
 
 /* Aside tools sidebar */
@@ -1077,19 +1103,69 @@ onMounted(async () => {
 
 /* Canvas wrapper with controls */
 .canvas-wrapper {
-  position: relative;
-  display: inline-block;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 /* Canvas container */
 .canvas-container {
   position: relative;
   background: white;
-  padding: 2rem;
+  padding: 1rem 2rem 2rem 1rem;
   border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   display: flex;
+  height: fit-content;
+  width: fit-content;
   justify-content: center;
+}
+
+/* Axis numbering styles */
+.canvas-with-axes {
+  display: inline-block;
+}
+
+.axis-top {
+  display: flex;
+}
+
+.axis-corner {
+  flex: 1;
+}
+
+.axis-numbers-horizontal {
+  display: flex;
+  margin-bottom: 6px;
+}
+
+.axis-numbers-horizontal .axis-number {
+  text-align: center;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.canvas-row {
+  display: flex;
+}
+
+.axis-left {
+  display: flex;
+  flex-direction: column;
+  margin-right: 6px;
+}
+
+.axis-left .axis-number {
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.axis-number {
+  display: flex;
+  font-size: 12px;
+  color: #666;
+  font-family: monospace;
+  font-weight: 600;
 }
 
 canvas {
@@ -1133,6 +1209,7 @@ canvas[data-tool="hand"]:active {
     opacity: 0;
     transform: translateY(-5px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -1150,7 +1227,7 @@ canvas[data-tool="hand"]:active {
   height: 50px;
   border-radius: 4px;
   border: 2px solid white;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
   flex-shrink: 0;
 }
 

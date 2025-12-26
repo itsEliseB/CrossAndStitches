@@ -60,6 +60,9 @@
       <button @click="$emit('redo')" :disabled="!canRedo" class="btn btn-small" title="Redo (Ctrl+Y)">
         ↷ Redo
       </button>
+      <div class="coordinates-display">
+        {{ hoveredCoordinates }}
+      </div>
     </div>
 
     <button @click="$emit('save')" class="btn btn-primary" :disabled="saving">
@@ -122,6 +125,10 @@ const props = defineProps({
   hasUnsavedChanges: {
     type: Boolean,
     default: false
+  },
+  hoveredCoordinates: {
+    type: String,
+    default: null
   },
 })
 
@@ -291,5 +298,16 @@ const handleNavigateBack = () => {
 
 .btn:disabled {
   cursor: not-allowed;
+}
+
+.coordinates-display {
+  padding: 0.4rem 0.8rem;
+  background: #f0f3ff;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #667eea;
+  font-family: monospace;
+  border: 1px solid #e0e7ff;
 }
 </style>
