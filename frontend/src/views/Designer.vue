@@ -203,6 +203,9 @@ const panStartY = ref(0)
 const scrollStartX = ref(0)
 const scrollStartY = ref(0)
 
+// Performance optimization: throttle renders with requestAnimationFrame
+let pendingRenderFrame = null
+
 // Undo/Redo state
 const history = ref([])
 const historyIndex = ref(-1)
@@ -269,9 +272,9 @@ const hasUnsavedChanges = computed(() => {
 
 // Format hovered coordinates for display
 const hoveredCoordinatesDisplay = computed(() => {
-  if (!cursorPosition.value) return '(-, -)'
+  if (!cursorPosition.value) return 'X- Y-'
   const { x, y } = cursorPosition.value
-  return `(${x + 1}, ${y + 1})`
+  return `X${x + 1} Y${y + 1}`
 })
 
 // Calculate canvas-area minimum dimensions
@@ -298,8 +301,8 @@ const canvasAreaStyle = computed(() => {
   const minHeight = containerHeight + 32 + 32 // 2rem + 32px
 
   return {
-    minWidth: `${minWidth}px`,
-    minHeight: `${minHeight}px`
+    width: `${minWidth}px`,
+    height: `${minHeight}px`
   }
 })
 
@@ -512,6 +515,16 @@ const drawCheckeredPattern = (x, y, size) => {
       }
     }
   }
+}
+
+// Throttled render function using requestAnimationFrame
+const scheduleRender = () => {
+  if (pendingRenderFrame !== null) return // Already scheduled
+
+  pendingRenderFrame = requestAnimationFrame(() => {
+    renderGrid()
+    pendingRenderFrame = null
+  })
 }
 
 // Render grid on canvas
@@ -749,8 +762,12 @@ const handleMouseMove = (event) => {
   // Update cursor position for brush preview
   const { x, y } = getGridCoords(event)
   if (x >= 0 && x < gridWidth.value && y >= 0 && y < gridHeight.value) {
-    cursorPosition.value = { x, y }
-    renderGrid()  // Re-render to show brush preview
+    // Only update if position actually changed
+    const posChanged = !cursorPosition.value || cursorPosition.value.x !== x || cursorPosition.value.y !== y
+    if (posChanged) {
+      cursorPosition.value = { x, y }
+      scheduleRender()  // Throttled render for brush preview
+    }
   }
 
   draw(event)  // Handle drawing
@@ -762,7 +779,7 @@ const handleMouseLeave = (event) => {
   stopDrawing(event)  // Stop drawing
   hoveredColorInfo.value = null  // Clear color info
   cursorPosition.value = null  // Clear brush preview
-  renderGrid()  // Re-render to clear preview
+  scheduleRender()  // Re-render to clear preview (throttled)
 }
 
 // Flood fill algorithm for bucket tool
@@ -965,6 +982,11 @@ onMounted(async () => {
     if (successAlertTimer) {
       clearTimeout(successAlertTimer)
     }
+
+    // Cancel pending render frame
+    if (pendingRenderFrame !== null) {
+      cancelAnimationFrame(pendingRenderFrame)
+    }
   })
 })
 </script>
@@ -1106,6 +1128,8 @@ onMounted(async () => {
   display: flex;
   justify-content: center;
   align-items: center;
+  min-height: 100%;
+  min-width: 100%;
 }
 
 /* Canvas container */

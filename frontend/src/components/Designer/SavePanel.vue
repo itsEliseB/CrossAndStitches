@@ -13,10 +13,9 @@
         <span>My Designs</span>
       </button>
       <div class="title-group">
-        <!-- Display mode: show title + edit button + dimensions -->
+        <!-- Display mode: show title + edit button -->
         <div v-if="!isEditingTitle" class="title-display">
           <span class="title-text">{{ title || titlePlaceholder }}</span>
-          <span v-if="gridDimensions" class="dimensions">{{ gridDimensions }}</span>
           <button
             @click="startEditingTitle"
             class="edit-btn"
@@ -45,14 +44,14 @@
         />
       </div>
     </div>
-    <!-- <div class="form-group"> -->
-    <!-- <label>Description:</label> -->
-    <!-- <textarea -->
-    <!-- :value="description" -->
-    <!-- @input="$emit('update:description', $event.target.value)" -->
-    <!-- :placeholder="descriptionPlaceholder" -->
-    <!-- ></textarea> -->
-    <!-- </div> -->
+
+    <!-- Canvas info: dimensions and coordinates -->
+    <div class="canvas-info">
+      <span v-if="gridDimensions" class="dimensions">{{ gridDimensions }}</span>
+      <div class="coordinates-display">{{ hoveredCoordinates }}</div>
+    </div>
+
+    <!-- History controls -->
     <div class="setting-group">
       <button @click="$emit('undo')" :disabled="!canUndo" class="btn btn-small" title="Undo (Ctrl+Z)">
         ↶ Undo
@@ -60,9 +59,6 @@
       <button @click="$emit('redo')" :disabled="!canRedo" class="btn btn-small" title="Redo (Ctrl+Y)">
         ↷ Redo
       </button>
-      <div class="coordinates-display">
-        {{ hoveredCoordinates }}
-      </div>
     </div>
 
     <button @click="$emit('save')" class="btn btn-primary" :disabled="saving">
@@ -246,6 +242,14 @@ const handleNavigateBack = () => {
   box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
 }
 
+.canvas-info {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  padding-left: 1rem;
+  border-left: 1px solid #ddd;
+}
+
 .setting-group {
   display: flex;
   gap: 0.5rem;
@@ -308,6 +312,8 @@ const handleNavigateBack = () => {
   font-weight: 600;
   color: #667eea;
   font-family: monospace;
+  width: 7rem;
+  text-align: center;
   border: 1px solid #e0e7ff;
 }
 </style>
