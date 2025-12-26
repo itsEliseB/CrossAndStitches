@@ -8,25 +8,25 @@
     <!-- Top controls -->
     <div class="control-edge top">
       <button @click="$emit('addRowTop')" class="btn-edge btn-add" title="Add row to top">+</button>
-      <button @click="$emit('removeRowTop')" class="btn-edge btn-remove" :disabled="gridHeight <= 5" title="Remove top row">−</button>
+      <button @click="$emit('removeRowTop')" class="btn-edge btn-remove" :disabled="gridHeight <= 1" title="Remove top row">−</button>
     </div>
 
     <!-- Bottom controls -->
     <div class="control-edge bottom">
       <button @click="$emit('addRowBottom')" class="btn-edge btn-add" title="Add row to bottom">+</button>
-      <button @click="$emit('removeRowBottom')" class="btn-edge btn-remove" :disabled="gridHeight <= 5" title="Remove bottom row">−</button>
+      <button @click="$emit('removeRowBottom')" class="btn-edge btn-remove" :disabled="gridHeight <= 1" title="Remove bottom row">−</button>
     </div>
 
     <!-- Left controls -->
     <div class="control-edge left">
       <button @click="$emit('addColumnLeft')" class="btn-edge btn-add" title="Add column to left">+</button>
-      <button @click="$emit('removeColumnLeft')" class="btn-edge btn-remove" :disabled="gridWidth <= 5" title="Remove left column">−</button>
+      <button @click="$emit('removeColumnLeft')" class="btn-edge btn-remove" :disabled="gridWidth <= 1" title="Remove left column">−</button>
     </div>
 
     <!-- Right controls -->
     <div class="control-edge right">
       <button @click="$emit('addColumnRight')" class="btn-edge btn-add" title="Add column to right">+</button>
-      <button @click="$emit('removeColumnRight')" class="btn-edge btn-remove" :disabled="gridWidth <= 5" title="Remove right column">−</button>
+      <button @click="$emit('removeColumnRight')" class="btn-edge btn-remove" :disabled="gridWidth <= 1" title="Remove right column">−</button>
     </div>
   </div>
 </template>

@@ -31,7 +31,7 @@
           :save-button-text="isEditMode ? 'Update Design' : 'Save Design'"
           :title-placeholder="isEditMode ? '' : 'My Cross-Stitch Pattern'"
           :description-placeholder="isEditMode ? '' : 'Optional description'" :show-cancel="isEditMode"
-          :can-undo="canUndo" :can-redo="canRedo" :grid-dimensions="`${gridHeight}×${gridWidth}`"
+          :can-undo="canUndo" :can-redo="canRedo" :grid-dimensions="`${gridWidth}×${gridHeight}`"
           :has-unsaved-changes="hasUnsavedChanges" :hovered-coordinates="hoveredCoordinatesDisplay"
           @save="saveDesign" @undo="undo" @redo="redo" />
       </header>
@@ -458,7 +458,7 @@ const addColumnRight = () => {
 
 // Remove row from top
 const removeRowTop = () => {
-  if (grid.value.length > 5) {
+  if (grid.value.length > 1) {
     captureState()
     grid.value.shift()
     gridHeight.value--
@@ -468,7 +468,7 @@ const removeRowTop = () => {
 
 // Remove row from bottom
 const removeRowBottom = () => {
-  if (grid.value.length > 5) {
+  if (grid.value.length > 1) {
     captureState()
     grid.value.pop()
     gridHeight.value--
@@ -478,7 +478,7 @@ const removeRowBottom = () => {
 
 // Remove column from left
 const removeColumnLeft = () => {
-  if (grid.value[0]?.length > 5) {
+  if (grid.value[0]?.length > 1) {
     captureState()
     grid.value.forEach(row => row.shift())
     gridWidth.value--
@@ -488,7 +488,7 @@ const removeColumnLeft = () => {
 
 // Remove column from right
 const removeColumnRight = () => {
-  if (grid.value[0]?.length > 5) {
+  if (grid.value[0]?.length > 1) {
     captureState()
     grid.value.forEach(row => row.pop())
     gridWidth.value--
