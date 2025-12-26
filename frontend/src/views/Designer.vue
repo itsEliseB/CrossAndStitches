@@ -14,13 +14,22 @@
 
     <!-- Main designer interface -->
     <div v-else class="designer-container">
+      <!-- Success alert -->
+      <div v-if="showSuccessAlert" class="success-alert">
+        ✓ Design saved successfully!
+      </div>
+
+      <!-- Error alert -->
+      <div v-if="saveError" class="error-alert">
+        ✕ {{ saveError }}
+      </div>
+
       <!-- Header: Toolbar with title, actions, save button -->
       <header class="designer-header">
         <SavePanel
           v-model:title="title"
           v-model:description="description"
           :saving="saving"
-          :save-error="saveError"
           :panel-title="isEditMode ? 'Update Design' : 'Save Design'"
           :save-button-text="isEditMode ? 'Update Design' : 'Save Design'"
           :title-placeholder="isEditMode ? '' : 'My Cross-Stitch Pattern'"
@@ -29,13 +38,10 @@
           :can-undo="canUndo"
           :can-redo="canRedo"
           :grid-dimensions="`${gridHeight}×${gridWidth}`"
-          :zoom="zoom"
+          :has-unsaved-changes="hasUnsavedChanges"
           @save="saveDesign"
           @undo="undo"
           @redo="redo"
-          @zoom-in="zoomIn"
-          @zoom-out="zoomOut"
-          @zoom-reset="resetZoom"
         />
       </header>
 
@@ -65,16 +71,8 @@
 
         <!-- Main: Canvas area -->
         <main class="canvas-area">
-          <div class="canvas-wrapper" @wheel="handleWheel">
-            <div
-              class="scaled-canvas-wrapper"
-              :style="{
-                transform: `scale(${zoom / 100})`,
-                transformOrigin: 'top left',
-                // margin: `${300 * (zoom / 100)}px`
-              }"
-            >
-              <div class="canvas-container">
+          <div class="canvas-wrapper">
+            <div class="canvas-container">
                 <canvas
                   ref="canvasRef"
                   :data-tool="tool"
@@ -84,21 +82,20 @@
                   @mouseleave="handleMouseLeave"
                   @click="drawPixel"
                 ></canvas>
-              </div>
-
-              <GridControls
-                :grid-width="gridWidth"
-                :grid-height="gridHeight"
-                @add-row-top="addRowTop"
-                @remove-row-top="removeRowTop"
-                @add-row-bottom="addRowBottom"
-                @remove-row-bottom="removeRowBottom"
-                @add-column-left="addColumnLeft"
-                @remove-column-left="removeColumnLeft"
-                @add-column-right="addColumnRight"
-                @remove-column-right="removeColumnRight"
-              />
             </div>
+
+            <GridControls
+              :grid-width="gridWidth"
+              :grid-height="gridHeight"
+              @add-row-top="addRowTop"
+              @remove-row-top="removeRowTop"
+              @add-row-bottom="addRowBottom"
+              @remove-row-bottom="removeRowBottom"
+              @add-column-left="addColumnLeft"
+              @remove-column-left="removeColumnLeft"
+              @add-column-right="addColumnRight"
+              @remove-column-right="removeColumnRight"
+            />
           </div>
         </main>
       </div>
@@ -160,77 +157,6 @@ const resize = (e) => {
 const gridWidth = ref(30)
 const gridHeight = ref(30)
 const cellSize = ref(15)
-const zoom = ref(100) // Zoom percentage
-
-// Zoom with cursor-centered zooming
-const zoomToPoint = (newZoom, clientX, clientY) => {
-  const canvasArea = document.querySelector('.canvas-area')
-  if (!canvasArea) return
-
-  const oldZoom = zoom.value
-
-  // Get scroll position before zoom
-  const scrollLeft = canvasArea.scrollLeft
-  const scrollTop = canvasArea.scrollTop
-
-  // Get cursor position relative to canvas-area
-  const rect = canvasArea.getBoundingClientRect()
-  const cursorX = clientX - rect.left + scrollLeft
-  const cursorY = clientY - rect.top + scrollTop
-
-  // Apply new zoom
-  zoom.value = newZoom
-
-  // Calculate new scroll position to keep cursor point centered
-  nextTick(() => {
-    const zoomRatio = newZoom / oldZoom
-    const newScrollLeft = cursorX * zoomRatio - (clientX - rect.left)
-    const newScrollTop = cursorY * zoomRatio - (clientY - rect.top)
-
-    canvasArea.scrollLeft = newScrollLeft
-    canvasArea.scrollTop = newScrollTop
-  })
-}
-
-const zoomIn = (event) => {
-  if (zoom.value < 400) {
-    const newZoom = zoom.value + 10
-    if (event) {
-      zoomToPoint(newZoom, event.clientX, event.clientY)
-    } else {
-      zoom.value = newZoom
-    }
-  }
-}
-
-const zoomOut = (event) => {
-  if (zoom.value > 50) {
-    const newZoom = zoom.value - 10
-    if (event) {
-      zoomToPoint(newZoom, event.clientX, event.clientY)
-    } else {
-      zoom.value = newZoom
-    }
-  }
-}
-
-const resetZoom = () => {
-  zoom.value = 100
-  // Center the view
-  nextTick(() => {
-    const canvasArea = document.querySelector('.canvas-area')
-    if (canvasArea) {
-      canvasArea.scrollLeft = (canvasArea.scrollWidth - canvasArea.clientWidth) / 2
-      canvasArea.scrollTop = (canvasArea.scrollHeight - canvasArea.clientHeight) / 2
-    }
-  })
-}
-
-// Handle mouse wheel - just prevent zoom, allow normal scrolling
-const handleWheel = (e) => {
-  // Allow normal scrolling, don't zoom
-  // Remove the preventDefault to allow scrolling
-}
 
 // Panning functions for hand tool
 const startPanning = (event) => {
@@ -345,6 +271,13 @@ const redo = () => {
 const canUndo = computed(() => historyIndex.value > 0)
 const canRedo = computed(() => historyIndex.value < history.value.length - 1)
 
+// Track unsaved changes by comparing current state with last saved state
+const hasUnsavedChanges = computed(() => {
+  if (!lastSavedSnapshot.value) return true // No save yet
+  const currentSnapshot = JSON.stringify(createSnapshot())
+  return currentSnapshot !== lastSavedSnapshot.value
+})
+
 // DMC color palette + transparent option (all 454 colors)
 const paletteColors = [
   TRANSPARENT,  // Transparent/empty cell
@@ -356,6 +289,9 @@ const title = ref('')
 const description = ref('')
 const saving = ref(false)
 const saveError = ref(null)
+const showSuccessAlert = ref(false)
+const lastSavedSnapshot = ref(null)
+let successAlertTimer = null
 
 // Initialize grid data (for create mode)
 const initializeGrid = () => {
@@ -409,6 +345,9 @@ const loadDesign = async () => {
     // Capture initial state for undo
     history.value = [createSnapshot()]
     historyIndex.value = 0
+
+    // Mark initial state as saved (no unsaved changes on load)
+    lastSavedSnapshot.value = JSON.stringify(createSnapshot())
 
     loading.value = false
   } catch (err) {
@@ -637,10 +576,8 @@ const getGridCoords = (event) => {
   const canvas = canvasRef.value
   const rect = canvas.getBoundingClientRect()
 
-  // Account for zoom: the rect is already scaled, so we need to divide by scaled cell size
-  const scaledCellSize = cellSize.value * (zoom.value / 100)
-  const x = Math.floor((event.clientX - rect.left) / scaledCellSize)
-  const y = Math.floor((event.clientY - rect.top) / scaledCellSize)
+  const x = Math.floor((event.clientX - rect.left) / cellSize.value)
+  const y = Math.floor((event.clientY - rect.top) / cellSize.value)
 
   return { x, y }
 }
@@ -847,11 +784,6 @@ const clearGrid = () => {
 
 // Save design (create or update based on mode)
 const saveDesign = async () => {
-  if (!title.value.trim()) {
-    saveError.value = 'Please enter a title'
-    return
-  }
-
   saving.value = true
   saveError.value = null
 
@@ -859,8 +791,20 @@ const saveDesign = async () => {
     // Extract unique colors (palette) excluding transparent
     const palette = [...new Set(grid.value.flat())].filter(c => !isTransparent(c))
 
+    // Generate default title if empty
+    let finalTitle = title.value.trim()
+    if (!finalTitle) {
+      if (isEditMode.value) {
+        finalTitle = `Design #${designId.value}`
+      } else {
+        finalTitle = 'Untitled Design'
+      }
+      // Update the title ref so it shows in the UI
+      title.value = finalTitle
+    }
+
     const designData = {
-      title: title.value,
+      title: finalTitle,
       description: description.value || null,
       width: gridWidth.value,
       height: gridHeight.value,
@@ -872,13 +816,34 @@ const saveDesign = async () => {
 
     if (isEditMode.value) {
       await designsAPI.update(designId.value, designData)
-      router.push('/designs')
     } else {
       const response = await designsAPI.create(designData)
-      // Get the ID from the response (could be response.data.id or response.data)
+      // Get the ID from the response and update the route without navigation
       const newDesignId = response.data?.id || response.data
-      router.push(`/designs/${newDesignId}/edit`)
+      // Update title with the new ID if it was "Untitled Design"
+      if (finalTitle === 'Untitled Design') {
+        title.value = `Design #${newDesignId}`
+        // Also update it in the backend
+        await designsAPI.update(newDesignId, {
+          ...designData,
+          title: `Design #${newDesignId}`
+        })
+      }
+      // Update URL to edit mode without full page navigation
+      router.replace(`/designs/${newDesignId}/edit`)
     }
+
+    // Mark current state as saved
+    lastSavedSnapshot.value = JSON.stringify(createSnapshot())
+
+    // Show success alert for 10 seconds
+    showSuccessAlert.value = true
+    if (successAlertTimer) {
+      clearTimeout(successAlertTimer)
+    }
+    successAlertTimer = setTimeout(() => {
+      showSuccessAlert.value = false
+    }, 10000)
   } catch (err) {
     saveError.value = err.response?.data?.detail || `Failed to ${isEditMode.value ? 'update' : 'save'} design`
   } finally {
@@ -905,7 +870,7 @@ onMounted(async () => {
     renderGrid()
   }
 
-  // Keyboard shortcuts for undo/redo/zoom
+  // Keyboard shortcuts for undo/redo
   const handleKeyDown = (event) => {
     if (isDrawing.value) return  // Don't undo/redo while drawing
 
@@ -921,21 +886,6 @@ onMounted(async () => {
     ) {
       event.preventDefault()
       redo()
-    }
-    // Ctrl+Plus or Ctrl+= for zoom in
-    else if ((event.ctrlKey || event.metaKey) && (event.key === '+' || event.key === '=')) {
-      event.preventDefault()
-      zoomIn()
-    }
-    // Ctrl+Minus for zoom out
-    else if ((event.ctrlKey || event.metaKey) && event.key === '-') {
-      event.preventDefault()
-      zoomOut()
-    }
-    // Ctrl+0 for reset zoom
-    else if ((event.ctrlKey || event.metaKey) && event.key === '0') {
-      event.preventDefault()
-      resetZoom()
     }
   }
 
@@ -956,6 +906,11 @@ onMounted(async () => {
     window.removeEventListener('mouseup', stopResize)
     window.removeEventListener('mousemove', handlePanning)
     window.removeEventListener('mouseup', stopPanning)
+
+    // Clear success alert timer
+    if (successAlertTimer) {
+      clearTimeout(successAlertTimer)
+    }
   })
 })
 </script>
@@ -983,6 +938,49 @@ onMounted(async () => {
   color: #c33;
   border-radius: 4px;
   margin: 2rem;
+}
+
+/* Success alert */
+.success-alert {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  padding: 1rem 1.5rem;
+  background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+  color: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(40, 167, 69, 0.4);
+  font-size: 1rem;
+  font-weight: 500;
+  z-index: 1000;
+  animation: slideInRight 0.3s ease-out;
+}
+
+/* Error alert */
+.error-alert {
+  position: fixed;
+  top: 80px;
+  right: 20px;
+  padding: 1rem 1.5rem;
+  background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+  color: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(220, 53, 69, 0.4);
+  font-size: 1rem;
+  font-weight: 500;
+  z-index: 1000;
+  animation: slideInRight 0.3s ease-out;
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(400px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
 }
 
 /* Designer container */
@@ -1017,49 +1015,6 @@ onMounted(async () => {
   overflow: auto;
   padding: 1rem;
   align-items: center;
-}
-
-/* Zoom controls */
-.zoom-controls {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  background: white;
-  padding: 0.5rem 1rem;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-  margin-bottom: 1rem;
-}
-
-.zoom-btn {
-  width: 32px;
-  height: 32px;
-  border: 1px solid #ddd;
-  background: white;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 1.2rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s;
-}
-
-.zoom-btn:hover {
-  background: #667eea;
-  color: white;
-  border-color: #667eea;
-}
-
-.zoom-btn.reset {
-  font-size: 1.4rem;
-}
-
-.zoom-level {
-  min-width: 50px;
-  text-align: center;
-  font-weight: 600;
-  color: #333;
 }
 
 /* Aside tools sidebar */
@@ -1098,15 +1053,7 @@ onMounted(async () => {
 /* Canvas wrapper with controls */
 .canvas-wrapper {
   position: relative;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 0;
-}
-
-/* Scaled canvas wrapper - applies zoom transform to everything inside */
-.scaled-canvas-wrapper {
-  position: relative;
+  display: inline-block;
 }
 
 /* Canvas container */
