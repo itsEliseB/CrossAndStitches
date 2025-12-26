@@ -5,8 +5,8 @@
 
 <template>
   <div id="app">
-    <!-- Navigation Bar -->
-    <nav class="navbar">
+    <!-- Navigation Bar (hidden on designer routes) -->
+    <nav v-if="!isDesignerRoute" class="navbar">
       <div class="nav-container">
         <router-link to="/" class="nav-brand">
           ✂️ Cross-Stitch Designer
@@ -40,12 +40,19 @@
 </template>
 
 <script setup>
+import { computed } from 'vue'
 import { useAuthStore } from './stores/auth'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 
 // Access stores and router
 const authStore = useAuthStore()
 const router = useRouter()
+const route = useRoute()
+
+// Check if current route is designer/editor
+const isDesignerRoute = computed(() => {
+  return route.path.includes('/designs/new') || route.path.includes('/edit')
+})
 
 // Handle logout
 const handleLogout = () => {
