@@ -28,16 +28,22 @@
           :show-cancel="isEditMode"
           :can-undo="canUndo"
           :can-redo="canRedo"
+          :grid-dimensions="`${gridHeight}×${gridWidth}`"
+          :zoom="zoom"
           @save="saveDesign"
           @undo="undo"
           @redo="redo"
+          @zoom-in="zoomIn"
+          @zoom-out="zoomOut"
+          @zoom-reset="resetZoom"
         />
       </header>
 
       <!-- Content layout: main canvas + aside tools -->
-      <div class="designer-layout">
+      <div class="designer-layout" :style="{ gridTemplateColumns: `${sidebarWidth}px 1fr` }">
         <!-- Aside: Tools and palette -->
-        <aside class="tools-sidebar">
+        <aside class="tools-sidebar" :style="{ width: `${sidebarWidth}px` }">
+          <div class="resize-handle" @mousedown="startResize"></div>
           <SettingsPanel
             v-model:currentColor="currentColor"
             v-model:tool="tool"
@@ -59,28 +65,40 @@
 
         <!-- Main: Canvas area -->
         <main class="canvas-area">
-          <GridControls
-            :grid-width="gridWidth"
-            :grid-height="gridHeight"
-            @add-row-top="addRowTop"
-            @remove-row-top="removeRowTop"
-            @add-row-bottom="addRowBottom"
-            @remove-row-bottom="removeRowBottom"
-            @add-column-left="addColumnLeft"
-            @remove-column-left="removeColumnLeft"
-            @add-column-right="addColumnRight"
-            @remove-column-right="removeColumnRight"
-          />
+          <div class="canvas-wrapper" @wheel="handleWheel">
+            <div
+              class="scaled-canvas-wrapper"
+              :style="{
+                transform: `scale(${zoom / 100})`,
+                transformOrigin: 'top left',
+                // margin: `${300 * (zoom / 100)}px`
+              }"
+            >
+              <div class="canvas-container">
+                <canvas
+                  ref="canvasRef"
+                  :data-tool="tool"
+                  @mousedown="startDrawing"
+                  @mousemove="handleMouseMove"
+                  @mouseup="stopDrawing"
+                  @mouseleave="handleMouseLeave"
+                  @click="drawPixel"
+                ></canvas>
+              </div>
 
-          <div class="canvas-container">
-            <canvas
-              ref="canvasRef"
-              @mousedown="startDrawing"
-              @mousemove="handleMouseMove"
-              @mouseup="stopDrawing"
-              @mouseleave="handleMouseLeave"
-              @click="drawPixel"
-            ></canvas>
+              <GridControls
+                :grid-width="gridWidth"
+                :grid-height="gridHeight"
+                @add-row-top="addRowTop"
+                @remove-row-top="removeRowTop"
+                @add-row-bottom="addRowBottom"
+                @remove-row-bottom="removeRowBottom"
+                @add-column-left="addColumnLeft"
+                @remove-column-left="removeColumnLeft"
+                @add-column-right="addColumnRight"
+                @remove-column-right="removeColumnRight"
+              />
+            </div>
           </div>
         </main>
       </div>
@@ -109,20 +127,166 @@ const designId = computed(() => route.params.id)
 const loading = ref(isEditMode.value)
 const error = ref(null)
 
+// Sidebar resizing
+const sidebarWidth = ref(350)
+const isResizing = ref(false)
+
+const startResize = () => {
+  isResizing.value = true
+  document.body.style.cursor = 'ew-resize'
+  document.body.style.userSelect = 'none'
+}
+
+const stopResize = () => {
+  isResizing.value = false
+  document.body.style.cursor = ''
+  document.body.style.userSelect = ''
+}
+
+const resize = (e) => {
+  if (!isResizing.value) return
+  const container = document.querySelector('.designer-layout')
+  if (!container) return
+
+  const containerRect = container.getBoundingClientRect()
+  const newWidth = e.clientX - containerRect.left
+
+  if (newWidth >= 250 && newWidth <= 600) {
+    sidebarWidth.value = newWidth
+  }
+}
+
 // Grid settings
 const gridWidth = ref(30)
 const gridHeight = ref(30)
 const cellSize = ref(15)
+const zoom = ref(100) // Zoom percentage
+
+// Zoom with cursor-centered zooming
+const zoomToPoint = (newZoom, clientX, clientY) => {
+  const canvasArea = document.querySelector('.canvas-area')
+  if (!canvasArea) return
+
+  const oldZoom = zoom.value
+
+  // Get scroll position before zoom
+  const scrollLeft = canvasArea.scrollLeft
+  const scrollTop = canvasArea.scrollTop
+
+  // Get cursor position relative to canvas-area
+  const rect = canvasArea.getBoundingClientRect()
+  const cursorX = clientX - rect.left + scrollLeft
+  const cursorY = clientY - rect.top + scrollTop
+
+  // Apply new zoom
+  zoom.value = newZoom
+
+  // Calculate new scroll position to keep cursor point centered
+  nextTick(() => {
+    const zoomRatio = newZoom / oldZoom
+    const newScrollLeft = cursorX * zoomRatio - (clientX - rect.left)
+    const newScrollTop = cursorY * zoomRatio - (clientY - rect.top)
+
+    canvasArea.scrollLeft = newScrollLeft
+    canvasArea.scrollTop = newScrollTop
+  })
+}
+
+const zoomIn = (event) => {
+  if (zoom.value < 400) {
+    const newZoom = zoom.value + 10
+    if (event) {
+      zoomToPoint(newZoom, event.clientX, event.clientY)
+    } else {
+      zoom.value = newZoom
+    }
+  }
+}
+
+const zoomOut = (event) => {
+  if (zoom.value > 50) {
+    const newZoom = zoom.value - 10
+    if (event) {
+      zoomToPoint(newZoom, event.clientX, event.clientY)
+    } else {
+      zoom.value = newZoom
+    }
+  }
+}
+
+const resetZoom = () => {
+  zoom.value = 100
+  // Center the view
+  nextTick(() => {
+    const canvasArea = document.querySelector('.canvas-area')
+    if (canvasArea) {
+      canvasArea.scrollLeft = (canvasArea.scrollWidth - canvasArea.clientWidth) / 2
+      canvasArea.scrollTop = (canvasArea.scrollHeight - canvasArea.clientHeight) / 2
+    }
+  })
+}
+
+// Handle mouse wheel - just prevent zoom, allow normal scrolling
+const handleWheel = (e) => {
+  // Allow normal scrolling, don't zoom
+  // Remove the preventDefault to allow scrolling
+}
+
+// Panning functions for hand tool
+const startPanning = (event) => {
+  if (tool.value === 'hand') {
+    isPanning.value = true
+    panStartX.value = event.clientX
+    panStartY.value = event.clientY
+
+    const canvasArea = document.querySelector('.canvas-area')
+    if (canvasArea) {
+      scrollStartX.value = canvasArea.scrollLeft
+      scrollStartY.value = canvasArea.scrollTop
+      canvasArea.style.cursor = 'grabbing'
+    }
+  }
+}
+
+const handlePanning = (event) => {
+  if (isPanning.value && tool.value === 'hand') {
+    const deltaX = event.clientX - panStartX.value
+    const deltaY = event.clientY - panStartY.value
+
+    const canvasArea = document.querySelector('.canvas-area')
+    if (canvasArea) {
+      canvasArea.scrollLeft = scrollStartX.value - deltaX
+      canvasArea.scrollTop = scrollStartY.value - deltaY
+    }
+  }
+}
+
+const stopPanning = () => {
+  if (isPanning.value) {
+    isPanning.value = false
+    const canvasArea = document.querySelector('.canvas-area')
+    if (canvasArea) {
+      canvasArea.style.cursor = tool.value === 'hand' ? 'grab' : ''
+    }
+  }
+}
 
 // Drawing state
 const grid = ref([])
 const currentColor = ref('#C72B3B')  // Default to DMC 321 Red
-const tool = ref('draw')  // 'draw' or 'erase'
+const tool = ref('draw')  // 'draw', 'erase', 'bucket', 'eyedropper', or 'hand'
 const brushSize = ref(1)  // Brush size: 1x1, 2x2, 3x3, etc.
 const isDrawing = ref(false)
 const startingTool = ref(null)  // Track tool at start of drawing operation
 const hoveredColorInfo = ref(null)  // Color info for hovered cell (eyedropper)
 const cursorPosition = ref(null)  // Current cursor position for brush preview
+
+// Panning state (for hand tool)
+const isPanning = ref(false)
+const panStartX = ref(0)
+const panStartY = ref(0)
+const scrollStartX = ref(0)
+const scrollStartY = ref(0)
 
 // Undo/Redo state
 const history = ref([])
@@ -415,7 +579,7 @@ const renderGrid = () => {
   }
 
   // Draw grid lines
-  ctx.strokeStyle = '#ddd'
+  ctx.strokeStyle = '#999'
   ctx.lineWidth = 1
 
   for (let x = 0; x <= gridWidth.value; x++) {
@@ -472,13 +636,23 @@ const renderGrid = () => {
 const getGridCoords = (event) => {
   const canvas = canvasRef.value
   const rect = canvas.getBoundingClientRect()
-  const x = Math.floor((event.clientX - rect.left) / cellSize.value)
-  const y = Math.floor((event.clientY - rect.top) / cellSize.value)
+
+  // Account for zoom: the rect is already scaled, so we need to divide by scaled cell size
+  const scaledCellSize = cellSize.value * (zoom.value / 100)
+  const x = Math.floor((event.clientX - rect.left) / scaledCellSize)
+  const y = Math.floor((event.clientY - rect.top) / scaledCellSize)
+
   return { x, y }
 }
 
 // Drawing functions
 const startDrawing = (event) => {
+  // Handle hand tool separately
+  if (tool.value === 'hand') {
+    startPanning(event)
+    return
+  }
+
   // Remember which tool we started with (eyedropper may change it)
   startingTool.value = tool.value
 
@@ -491,6 +665,12 @@ const startDrawing = (event) => {
 }
 
 const stopDrawing = () => {
+  // Handle panning stop
+  if (isPanning.value) {
+    stopPanning()
+    return
+  }
+
   if (isDrawing.value) {
     isDrawing.value = false
     // Don't capture state for eyedropper (it doesn't modify the grid)
@@ -573,6 +753,12 @@ const updateHoveredColorInfo = (event) => {
 
 // Handle mouse move on canvas
 const handleMouseMove = (event) => {
+  // Handle panning
+  if (isPanning.value) {
+    handlePanning(event)
+    return
+  }
+
   // Update cursor position for brush preview
   const { x, y } = getGridCoords(event)
   if (x >= 0 && x < gridWidth.value && y >= 0 && y < gridHeight.value) {
@@ -686,11 +872,13 @@ const saveDesign = async () => {
 
     if (isEditMode.value) {
       await designsAPI.update(designId.value, designData)
+      router.push('/designs')
     } else {
-      await designsAPI.create(designData)
+      const response = await designsAPI.create(designData)
+      // Get the ID from the response (could be response.data.id or response.data)
+      const newDesignId = response.data?.id || response.data
+      router.push(`/designs/${newDesignId}/edit`)
     }
-
-    router.push('/designs')
   } catch (err) {
     saveError.value = err.response?.data?.detail || `Failed to ${isEditMode.value ? 'update' : 'save'} design`
   } finally {
@@ -717,7 +905,7 @@ onMounted(async () => {
     renderGrid()
   }
 
-  // Keyboard shortcuts for undo/redo
+  // Keyboard shortcuts for undo/redo/zoom
   const handleKeyDown = (event) => {
     if (isDrawing.value) return  // Don't undo/redo while drawing
 
@@ -734,13 +922,40 @@ onMounted(async () => {
       event.preventDefault()
       redo()
     }
+    // Ctrl+Plus or Ctrl+= for zoom in
+    else if ((event.ctrlKey || event.metaKey) && (event.key === '+' || event.key === '=')) {
+      event.preventDefault()
+      zoomIn()
+    }
+    // Ctrl+Minus for zoom out
+    else if ((event.ctrlKey || event.metaKey) && event.key === '-') {
+      event.preventDefault()
+      zoomOut()
+    }
+    // Ctrl+0 for reset zoom
+    else if ((event.ctrlKey || event.metaKey) && event.key === '0') {
+      event.preventDefault()
+      resetZoom()
+    }
   }
 
   window.addEventListener('keydown', handleKeyDown)
 
+  // Resize event listeners
+  window.addEventListener('mousemove', resize)
+  window.addEventListener('mouseup', stopResize)
+
+  // Panning event listeners (global for hand tool)
+  window.addEventListener('mousemove', handlePanning)
+  window.addEventListener('mouseup', stopPanning)
+
   // Cleanup on unmount
   onUnmounted(() => {
     window.removeEventListener('keydown', handleKeyDown)
+    window.removeEventListener('mousemove', resize)
+    window.removeEventListener('mouseup', stopResize)
+    window.removeEventListener('mousemove', handlePanning)
+    window.removeEventListener('mouseup', stopPanning)
   })
 })
 </script>
@@ -797,37 +1012,138 @@ onMounted(async () => {
 .canvas-area {
   display: flex;
   flex-direction: column;
+  justify-content: center;
   background: #fafafa;
   overflow: auto;
   padding: 1rem;
+  align-items: center;
+}
+
+/* Zoom controls */
+.zoom-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: white;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  margin-bottom: 1rem;
+}
+
+.zoom-btn {
+  width: 32px;
+  height: 32px;
+  border: 1px solid #ddd;
+  background: white;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 1.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.zoom-btn:hover {
+  background: #667eea;
+  color: white;
+  border-color: #667eea;
+}
+
+.zoom-btn.reset {
+  font-size: 1.4rem;
+}
+
+.zoom-level {
+  min-width: 50px;
+  text-align: center;
+  font-weight: 600;
+  color: #333;
 }
 
 /* Aside tools sidebar */
 .tools-sidebar {
   background: white;
-  border-left: 1px solid #e0e0e0;
+  border-right: 1px solid #e0e0e0;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
   gap: 1rem;
   padding: 1rem;
+  position: relative;
+}
+
+/* Resize handle */
+.resize-handle {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  cursor: ew-resize;
+  background: transparent;
+  transition: background-color 0.2s;
+  z-index: 10;
+}
+
+.resize-handle:hover {
+  background-color: #667eea;
+}
+
+.resize-handle:active {
+  background-color: #764ba2;
+}
+
+/* Canvas wrapper with controls */
+.canvas-wrapper {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 0;
+}
+
+/* Scaled canvas wrapper - applies zoom transform to everything inside */
+.scaled-canvas-wrapper {
+  position: relative;
 }
 
 /* Canvas container */
 .canvas-container {
+  position: relative;
   background: white;
   padding: 2rem;
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-  margin-bottom: 2rem;
   display: flex;
   justify-content: center;
-  overflow: auto;
 }
 
 canvas {
   border: 2px solid #ddd;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: -webkit-crisp-edges;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+canvas[data-tool="draw"],
+canvas[data-tool="erase"],
+canvas[data-tool="bucket"] {
   cursor: crosshair;
+}
+
+canvas[data-tool="eyedropper"] {
+  cursor: crosshair;
+}
+
+canvas[data-tool="hand"] {
+  cursor: grab;
+}
+
+canvas[data-tool="hand"]:active {
+  cursor: grabbing;
 }
 
 /* Eyedropper color info display */

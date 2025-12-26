@@ -5,7 +5,24 @@
 
 <template>
   <div class="palette">
-    <h3>DMC Thread Color Palette</h3>
+    <h3>Color Palette</h3>
+
+    <!-- Current Color Display -->
+    <div class="current-color-display">
+      <label>Current Color:</label>
+      <div class="current-color-box">
+        <div
+          class="current-color-swatch"
+          :class="{ transparent: currentColor === TRANSPARENT }"
+          :style="currentColor !== TRANSPARENT ? { background: currentColor } : {}"
+        >
+          <div v-if="currentColor === TRANSPARENT" class="checkered-bg"></div>
+        </div>
+        <div class="current-color-name">{{ getColorName(currentColor) }}</div>
+      </div>
+    </div>
+
+    <!-- Palette Colors -->
     <div class="palette-colors">
       <div
         v-for="color in paletteColors"
@@ -23,9 +40,6 @@
           <div class="checkered-bg"></div>
         </template>
       </div>
-    </div>
-    <div class="color-info" v-if="currentColor">
-      <strong>{{ getColorName(currentColor) }}</strong>
     </div>
   </div>
 </template>
@@ -59,39 +73,90 @@ const getColorName = (color) => {
 <style scoped>
 .palette {
   background: white;
-  padding: 1.5rem;
+  padding: 1rem;
   border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-  margin-bottom: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
 }
 
 .palette h3 {
-  margin-bottom: 1rem;
+  margin: 0;
   color: #333;
+  font-size: 1rem;
+}
+
+/* Current Color Display */
+.current-color-display {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.current-color-display label {
+  font-weight: 500;
+  color: #333;
+  font-size: 0.9rem;
+}
+
+.current-color-box {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem;
+  background: #f9f9f9;
+  border-radius: 4px;
+}
+
+.current-color-swatch {
+  width: 60px;
+  height: 60px;
+  border-radius: 4px;
+  border: 3px solid #667eea;
+  flex-shrink: 0;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.current-color-swatch.transparent {
+  position: relative;
+  overflow: hidden;
+}
+
+.current-color-name {
+  font-weight: 500;
+  color: #333;
+  font-size: 0.85rem;
+  line-height: 1.3;
+  flex: 1;
 }
 
 .palette-colors {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem;
+  gap: 0.4rem;
+  max-height: 400px;
+  overflow-y: auto;
+  padding: 0.25rem;
 }
 
 .palette-color {
-  width: 40px;
-  height: 40px;
+  width: 32px;
+  height: 32px;
   border-radius: 4px;
   border: 2px solid #ddd;
   cursor: pointer;
-  transition: transform 0.2s;
+  transition: all 0.2s;
 }
 
 .palette-color:hover {
-  transform: scale(1.1);
+  transform: scale(1.15);
+  z-index: 1;
 }
 
 .palette-color.active {
   border-color: #667eea;
   border-width: 3px;
+  box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
 }
 
 .palette-color.transparent {
@@ -109,17 +174,5 @@ const getColorName = (color) => {
     linear-gradient(-45deg, transparent 75%, #ccc 75%);
   background-size: 10px 10px;
   background-position: 0 0, 0 5px, 5px -5px, -5px 0px;
-}
-
-.color-info {
-  margin-top: 1rem;
-  padding: 0.75rem;
-  background: #f9f9f9;
-  border-radius: 4px;
-  text-align: center;
-}
-
-.color-info strong {
-  color: #333;
 }
 </style>

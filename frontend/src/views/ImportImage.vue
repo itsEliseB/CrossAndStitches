@@ -229,7 +229,7 @@ const saveDesign = async () => {
   saveError.value = null
 
   try {
-    await imagesAPI.saveFromUpload({
+    const response = await imagesAPI.saveFromUpload({
       title: saveForm.value.title,
       description: saveForm.value.description || '',
       width: processedData.value.width,
@@ -238,7 +238,9 @@ const saveDesign = async () => {
       palette: JSON.stringify(processedData.value.palette),
     })
 
-    router.push('/designs')
+    // Get the ID from the response and redirect to edit page
+    const newDesignId = response.data?.id || response.data
+    router.push(`/designs/${newDesignId}/edit`)
   } catch (err) {
     saveError.value = err.response?.data?.detail || 'Failed to save design'
   } finally {

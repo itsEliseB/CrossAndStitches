@@ -13,9 +13,10 @@
         <span>My Designs</span>
       </router-link>
       <div class="title-group">
-        <!-- Display mode: show title + edit button -->
+        <!-- Display mode: show title + edit button + dimensions -->
         <div v-if="!isEditingTitle" class="title-display">
           <span class="title-text">{{ title || titlePlaceholder }}</span>
+          <span v-if="gridDimensions" class="dimensions">{{ gridDimensions }}</span>
           <button
             @click="startEditingTitle"
             class="edit-btn"
@@ -60,6 +61,15 @@
         ↷ Redo
       </button>
     </div>
+
+    <!-- Zoom controls -->
+    <div class="zoom-controls">
+      <button @click="$emit('zoom-out')" class="btn btn-small" title="Zoom out">−</button>
+      <span class="zoom-level">{{ zoom }}%</span>
+      <button @click="$emit('zoom-in')" class="btn btn-small" title="Zoom in">+</button>
+      <button @click="$emit('zoom-reset')" class="btn btn-small" title="Reset zoom">⟲</button>
+    </div>
+
     <button @click="$emit('save')" class="btn btn-primary" :disabled="saving">
       {{ saving ? 'Saving...' : saveButtonText }}
     </button>
@@ -116,9 +126,17 @@ defineProps({
     type: Boolean,
     required: true
   },
+  gridDimensions: {
+    type: String,
+    default: null
+  },
+  zoom: {
+    type: Number,
+    required: true
+  },
 })
 
-defineEmits(['update:title', 'update:description', 'save', 'undo', 'redo'])
+defineEmits(['update:title', 'update:description', 'save', 'undo', 'redo', 'zoom-in', 'zoom-out', 'zoom-reset'])
 
 // Inline title editing
 const isEditingTitle = ref(false)
@@ -178,6 +196,16 @@ const stopEditingTitle = () => {
   min-width: 200px;
 }
 
+.dimensions {
+  font-size: 0.9rem;
+  color: #667eea;
+  font-weight: 600;
+  padding: 0.25rem 0.5rem;
+  background: #f0f3ff;
+  border-radius: 4px;
+  margin-left: 0.5rem;
+}
+
 .edit-btn {
   background: none;
   border: none;
@@ -212,6 +240,24 @@ const stopEditingTitle = () => {
 .setting-group {
   display: flex;
   gap: 0.5rem;
+}
+
+/* Zoom controls */
+.zoom-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0 0.5rem;
+  border-left: 1px solid #ddd;
+  border-right: 1px solid #ddd;
+}
+
+.zoom-level {
+  min-width: 45px;
+  text-align: center;
+  font-weight: 600;
+  color: #667eea;
+  font-size: 0.9rem;
 }
 
 .btn {
