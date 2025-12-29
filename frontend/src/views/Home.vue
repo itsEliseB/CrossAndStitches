@@ -59,12 +59,12 @@ const authStore = useAuthStore()
 h1 {
   font-size: 3rem;
   margin-bottom: 1rem;
-  color: #667eea;
+  color: var(--color-primary);
 }
 
 .subtitle {
   font-size: 1.25rem;
-  color: #666;
+  color: var(--text-secondary);
   margin-bottom: 4rem;
 }
 
@@ -78,9 +78,17 @@ h1 {
 
 .feature {
   padding: 2rem;
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  background: var(--bg-elevated);
+  border-radius: 12px;
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--border-color-hover);
+  transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+}
+
+.feature:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
+  border-color: var(--color-primary);
 }
 
 .feature-icon {
@@ -90,11 +98,11 @@ h1 {
 
 .feature h3 {
   margin-bottom: 0.5rem;
-  color: #333;
+  color: var(--text-primary);
 }
 
 .feature p {
-  color: #666;
+  color: var(--text-secondary);
   line-height: 1.6;
 }
 
@@ -112,12 +120,13 @@ h1 {
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: var(--btn-primary-bg);
   color: white;
 }
 
 .btn-primary:hover {
+  background: var(--btn-primary-bg-hover);
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 4px 12px rgba(111, 91, 74, 0.4);
 }
 </style>

@@ -499,10 +499,18 @@ const removeColumnRight = () => {
 // Helper function to draw checkered pattern for transparent cells
 const drawCheckeredPattern = (x, y, size) => {
   const checkSize = size / 4
-  ctx.fillStyle = '#FFFFFF'
+
+  // Get theme-aware colors from CSS variables
+  const styles = getComputedStyle(document.documentElement)
+  const bgColor = styles.getPropertyValue('--bg-secondary').trim() || '#FFFFFF'
+  const checkerColor = styles.getPropertyValue('--btn-primary-bg').trim() || '#6F5B4A'
+
+  // Fill background
+  ctx.fillStyle = bgColor
   ctx.fillRect(x, y, size, size)
 
-  ctx.fillStyle = '#E0E0E0'
+  // Draw checkered pattern with primary button color
+  ctx.fillStyle = checkerColor
   for (let cy = 0; cy < 4; cy++) {
     for (let cx = 0; cx < 4; cx++) {
       if ((cx + cy) % 2 === 0) {
@@ -605,7 +613,7 @@ const renderGrid = () => {
 
     // Draw semi-transparent overlay for brush area
     ctx.fillStyle = tool.value === 'draw'
-      ? 'rgba(102, 126, 234, 0.3)'  // Blue tint for draw
+      ? 'rgba(111, 91, 74, 0.3)'  // Brown tint for draw
       : 'rgba(220, 53, 69, 0.3)'    // Red tint for erase
 
     for (let dy = -radius; dy < brushSize.value - radius; dy++) {
@@ -623,7 +631,7 @@ const renderGrid = () => {
     }
 
     // Draw outline around brush area
-    ctx.strokeStyle = tool.value === 'draw' ? '#667eea' : '#dc3545'
+    ctx.strokeStyle = tool.value === 'draw' ? '#6F5B4A' : '#dc3545'
     ctx.lineWidth = 2
 
     const startX = (x - radius) * cellSize.value
@@ -997,7 +1005,7 @@ onMounted(async () => {
   height: 100vh;
   display: flex;
   flex-direction: column;
-  background: #f5f5f5;
+  background: var(--bg-primary);
 }
 
 /* Loading and error states */
@@ -1005,7 +1013,7 @@ onMounted(async () => {
   padding: 2rem;
   text-align: center;
   font-size: 1.2rem;
-  color: #666;
+  color: var(--text-secondary);
 }
 
 .error-message {
@@ -1022,10 +1030,10 @@ onMounted(async () => {
   top: 20px;
   right: 20px;
   padding: 1rem 1.5rem;
-  background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+  background: #10b981;
   color: white;
   border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(40, 167, 69, 0.4);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
   font-size: 1rem;
   font-weight: 500;
   z-index: 1000;
@@ -1038,10 +1046,10 @@ onMounted(async () => {
   top: 80px;
   right: 20px;
   padding: 1rem 1.5rem;
-  background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+  background: #ef4444;
   color: white;
   border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(220, 53, 69, 0.4);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
   font-size: 1rem;
   font-weight: 500;
   z-index: 1000;
@@ -1085,15 +1093,15 @@ onMounted(async () => {
 
 /* Main canvas area */
 .canvas-area {
-  background: #fafafa;
+  background: var(--bg-secondary);
   overflow: scroll;
   padding: 1rem;
 }
 
 /* Aside tools sidebar */
 .tools-sidebar {
-  background: white;
-  border-right: 1px solid #e0e0e0;
+  background: var(--surface-color);
+  border-right: 1px solid var(--border-color);
   overflow-y: auto;
   display: flex;
   flex-direction: column;
@@ -1116,11 +1124,11 @@ onMounted(async () => {
 }
 
 .resize-handle:hover {
-  background-color: #667eea;
+  background-color: #6F5B4A;
 }
 
 .resize-handle:active {
-  background-color: #764ba2;
+  background-color: #5C4A3A;
 }
 
 /* Canvas wrapper with controls */
@@ -1135,14 +1143,20 @@ onMounted(async () => {
 /* Canvas container */
 .canvas-container {
   position: relative;
-  background: white;
+  background: var(--bg-elevated);
   padding: 1rem 2rem 2rem 1rem;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border-radius: 12px;
+  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--border-color-hover);
   display: flex;
   height: fit-content;
   width: fit-content;
   justify-content: center;
+  transition: box-shadow 0.3s ease;
+}
+
+.canvas-container:hover {
+  box-shadow: var(--shadow-xl);
 }
 
 /* Axis numbering styles */
@@ -1187,13 +1201,13 @@ onMounted(async () => {
 .axis-number {
   display: flex;
   font-size: 12px;
-  color: #666;
+  color: var(--text-secondary);
   font-family: monospace;
   font-weight: 600;
 }
 
 canvas {
-  border: 2px solid #ddd;
+  border: 2px solid var(--border-color);
   image-rendering: -moz-crisp-edges;
   image-rendering: -webkit-crisp-edges;
   image-rendering: pixelated;
@@ -1220,7 +1234,7 @@ canvas[data-tool="hand"]:active {
 
 /* Eyedropper color info display */
 .color-info-display {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: var(--color-primary);
   color: white;
   padding: 1rem;
   border-radius: 8px;

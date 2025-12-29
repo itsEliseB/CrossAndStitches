@@ -15,7 +15,7 @@
       <div class="title-group">
         <!-- Display mode: show title + edit button -->
         <div v-if="!isEditingTitle" class="title-display">
-          <span class="title-text">{{ title || titlePlaceholder }}</span>
+          <span @click="startEditingTitle" class="title-text">{{ title || titlePlaceholder }}</span>
           <button
             @click="startEditingTitle"
             class="edit-btn"
@@ -160,12 +160,13 @@ const handleNavigateBack = () => {
 
 <style scoped>
 .save-panel {
-  background: white;
+  background: var(--bg-elevated);
   padding: 1em;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-bottom: 1px solid #eee
+  border-bottom: 1px solid var(--border-color-hover);
+  box-shadow: var(--shadow-sm);
 }
 
 .panel-left {
@@ -177,7 +178,7 @@ const handleNavigateBack = () => {
 /* Title group */
 .title-group {
   min-width: 250px;
-  border-left: solid 1px #ddd;
+  border-left: solid 1px var(--border-color);
   padding-left: 1rem;
 }
 
@@ -191,22 +192,23 @@ const handleNavigateBack = () => {
 }
 
 .title-display:hover {
-  background-color: #f5f5f5;
+  background-color: var(--surface-hover);
 }
 
 .title-text {
   font-size: 1.1rem;
   font-weight: 500;
-  color: #333;
+  color: var(--text-primary);
   min-width: 200px;
+  cursor: pointer;
 }
 
 .dimensions {
   font-size: 0.9rem;
-  color: #667eea;
+  color: var(--color-primary);
   font-weight: 600;
   padding: 0.25rem 0.5rem;
-  background: #f0f3ff;
+  background: rgba(111, 91, 74, 0.12);
   border-radius: 4px;
   margin-left: 0.5rem;
 }
@@ -216,7 +218,7 @@ const handleNavigateBack = () => {
   border: none;
   padding: 0.25rem;
   cursor: pointer;
-  color: #666;
+  color: var(--text-secondary);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -227,19 +229,21 @@ const handleNavigateBack = () => {
 
 .edit-btn:hover {
   opacity: 1;
-  background-color: #e0e0e0;
-  color: #333;
+  background-color: var(--surface-hover);
+  color: var(--text-primary);
 }
 
 .title-input {
   width: 100%;
   padding: 0.5rem;
-  border: 2px solid #667eea;
+  border: 2px solid var(--color-primary);
   border-radius: 4px;
   font-size: 1.1rem;
   font-weight: 500;
   outline: none;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  box-shadow: 0 0 0 3px rgba(111, 91, 74, 0.15);
+  background: var(--surface-color);
+  color: var(--text-primary);
 }
 
 .canvas-info {
@@ -247,7 +251,7 @@ const handleNavigateBack = () => {
   gap: 0.75rem;
   align-items: center;
   padding-left: 1rem;
-  border-left: 1px solid #ddd;
+  border-left: 1px solid var(--border-color);
 }
 
 .setting-group {
@@ -257,8 +261,9 @@ const handleNavigateBack = () => {
 
 .btn {
   padding: 0.5rem 1rem;
-  border: 1px solid #ddd;
-  background: white;
+  border: 1px solid var(--border-color);
+  background: var(--surface-color);
+  color: var(--text-primary);
   border-radius: 4px;
   cursor: pointer;
   transition: all 0.2s;
@@ -270,12 +275,12 @@ const handleNavigateBack = () => {
 }
 
 .btn:hover {
-  background: #f5f5f5;
+  background: var(--surface-hover);
 }
 
 .btn-back {
   border: none;
-  color: #5f4d31;
+  color: var(--color-primary-dark);
 }
 
 .btn-back svg {
@@ -288,7 +293,7 @@ const handleNavigateBack = () => {
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: var(--btn-primary-bg);
   color: white;
   border: none;
   padding: 0.75rem 1.5rem;
@@ -296,8 +301,9 @@ const handleNavigateBack = () => {
 }
 
 .btn-primary:hover:not(:disabled) {
+  background: var(--btn-primary-bg-hover);
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 4px 12px rgba(111, 91, 74, 0.4);
 }
 
 .btn:disabled {
@@ -306,14 +312,14 @@ const handleNavigateBack = () => {
 
 .coordinates-display {
   padding: 0.4rem 0.8rem;
-  background: #f0f3ff;
+  background: rgba(111, 91, 74, 0.12);
   border-radius: 4px;
   font-size: 0.85rem;
   font-weight: 600;
-  color: #667eea;
+  color: var(--color-primary);
   font-family: monospace;
   width: 7rem;
   text-align: center;
-  border: 1px solid #e0e7ff;
+  border: 1px solid rgba(111, 91, 74, 0.2);
 }
 </style>

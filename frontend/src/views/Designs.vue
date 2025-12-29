@@ -167,7 +167,7 @@ const confirmDelete = async (design) => {
 
 <style scoped>
 .designs-page {
-  padding: 2rem 0;
+  padding: 2rem;
 }
 
 .page-header {
@@ -178,28 +178,32 @@ const confirmDelete = async (design) => {
 }
 
 h1 {
-  color: #333;
+  color: var(--text-primary);
 }
 
 .btn {
   display: inline-block;
   padding: 0.75rem 1.5rem;
-  border: none;
+  border: 1px solid var(--border-color);
   border-radius: 6px;
   text-decoration: none;
   cursor: pointer;
   transition: all 0.2s;
   font-size: 1rem;
+  background: var(--surface-color);
+  color: var(--text-primary);
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: var(--btn-primary-bg);
   color: white;
+  border-color: var(--btn-primary-bg);
 }
 
 .btn-primary:hover {
+  background: var(--btn-primary-bg-hover);
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 4px 12px rgba(111, 91, 74, 0.4);
 }
 
 .btn-small {
@@ -210,6 +214,7 @@ h1 {
 .btn-danger {
   background: #dc3545;
   color: white;
+  border-color: #dc3545;
 }
 
 .loading,
@@ -217,13 +222,14 @@ h1 {
 .empty-state {
   text-align: center;
   padding: 3rem;
-  color: #666;
+  color: var(--text-secondary);
 }
 
 .empty-state {
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  background: var(--bg-elevated);
+  border-radius: 12px;
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--border-color);
 }
 
 .designs-grid {
@@ -233,22 +239,24 @@ h1 {
 }
 
 .design-card {
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  background: var(--bg-elevated);
+  border-radius: 12px;
+  box-shadow: var(--shadow-md);
   overflow: hidden;
-  transition: transform 0.2s;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  border: 1px solid var(--border-color-hover);
 }
 
 .design-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+  box-shadow: var(--shadow-xl);
+  border-color: var(--color-primary);
 }
 
 .design-preview {
   width: 100%;
   height: 200px;
-  background: #f5f5f5;
+  background: var(--bg-secondary);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -265,16 +273,16 @@ h1 {
 
 .design-info h3 {
   margin-bottom: 0.5rem;
-  color: #333;
+  color: var(--text-primary);
 }
 
 .design-meta {
-  color: #666;
+  color: var(--text-secondary);
   font-size: 0.9rem;
 }
 
 .design-date {
-  color: #999;
+  color: var(--text-tertiary);
   font-size: 0.85rem;
   margin-top: 0.5rem;
 }
@@ -283,7 +291,7 @@ h1 {
   display: flex;
   gap: 0.5rem;
   padding: 1rem;
-  border-top: 1px solid #eee;
+  border-top: 1px solid var(--border-color);
 }
 
 .design-actions .btn {

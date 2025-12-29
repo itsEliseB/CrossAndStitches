@@ -182,12 +182,14 @@ const displayedToolName = computed(() => {
 
 <style scoped>
 .settings-panel {
-  background: white;
+  background: var(--bg-elevated);
   padding: 1rem;
-  border-radius: 8px;
+  border-radius: 10px;
   display: flex;
   flex-direction: column;
   gap: 1rem;
+  border: 1px solid var(--border-color-hover);
+  box-shadow: var(--shadow-sm);
 }
 
 .setting-group {
@@ -205,21 +207,23 @@ const displayedToolName = computed(() => {
 
 .setting-group label {
   font-weight: 500;
-  color: #333;
+  color: var(--text-primary);
   font-size: 0.9rem;
   width: 100%;
 }
 
 .tool-name {
-  color: #667eea;
+  color: var(--color-primary);
   font-weight: 600;
 }
 
 .setting-group input[type="number"] {
   width: 60px;
   padding: 0.5rem;
-  border: 1px solid #ddd;
+  border: 1px solid var(--border-color);
   border-radius: 4px;
+  background: var(--surface-color);
+  color: var(--text-primary);
 }
 
 .setting-group #grid-size-setting {
@@ -234,21 +238,22 @@ const displayedToolName = computed(() => {
 
 .btn {
   padding: 0.5rem 1rem;
-  border: 1px solid #ddd;
-  background: white;
+  border: 1px solid var(--border-color);
+  background: var(--surface-color);
+  color: var(--text-primary);
   border-radius: 4px;
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .btn:hover {
-  background: #f5f5f5;
+  background: var(--surface-hover);
 }
 
 .btn.active {
-  background: #667eea;
+  background: var(--btn-primary-bg);
   color: white;
-  border-color: #667eea;
+  border-color: var(--btn-primary-bg);
 }
 
 .btn-small {
@@ -270,7 +275,7 @@ const displayedToolName = computed(() => {
 
 /* Eyedropper color info display */
 .color-info-display {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: var(--color-primary);
   color: white;
   padding: 1rem;
   border-radius: 8px;

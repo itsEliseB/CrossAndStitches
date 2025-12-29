@@ -130,17 +130,18 @@ const handleRegister = async () => {
 }
 
 .auth-card {
-  background: white;
-  padding: 2rem;
-  border-radius: 8px;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+  background: var(--bg-elevated);
+  padding: 2.5rem;
+  border-radius: 16px;
+  box-shadow: var(--shadow-xl);
+  border: 1px solid var(--border-color-hover);
   width: 100%;
   max-width: 400px;
 }
 
 h2 {
   text-align: center;
-  color: #333;
+  color: var(--text-primary);
   margin-bottom: 2rem;
 }
 
@@ -151,21 +152,25 @@ h2 {
 label {
   display: block;
   margin-bottom: 0.5rem;
-  color: #333;
+  color: var(--text-primary);
   font-weight: 500;
 }
 
 input {
   width: 100%;
   padding: 0.75rem;
-  border: 1px solid #ddd;
-  border-radius: 4px;
+  border: 1px solid var(--border-color);
+  background: var(--surface-color);
+  color: var(--text-primary);
+  border-radius: 8px;
   font-size: 1rem;
+  transition: all 0.2s;
 }
 
 input:focus {
   outline: none;
-  border-color: #667eea;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(212, 185, 162, 0.15);
 }
 
 .btn {
@@ -179,13 +184,14 @@ input:focus {
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: var(--btn-primary-bg);
   color: white;
 }
 
 .btn-primary:hover:not(:disabled) {
+  background: var(--btn-primary-bg-hover);
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 4px 12px rgba(111, 91, 74, 0.4);
 }
 
 .btn:disabled {

@@ -91,8 +91,9 @@ defineEmits(['addRowTop', 'removeRowTop', 'addRowBottom', 'removeRowBottom', 'ad
   width: 32px;
   height: 32px;
   padding: 0;
-  border: 2px solid #e0e0e0;
-  background: white;
+  border: 2px solid var(--border-color);
+  background: var(--surface-color);
+  color: var(--text-primary);
   border-radius: 6px;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -102,44 +103,44 @@ defineEmits(['addRowTop', 'removeRowTop', 'addRowBottom', 'removeRowBottom', 'ad
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+  box-shadow: var(--shadow-xs);
 }
 
 .btn-edge:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.12);
+  box-shadow: var(--shadow-sm);
 }
 
 .btn-edge:active:not(:disabled) {
   transform: translateY(0);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+  box-shadow: var(--shadow-xs);
 }
 
 .btn-edge:disabled {
   opacity: 0.3;
   cursor: not-allowed;
-  background: #f5f5f5;
+  background: var(--bg-secondary);
 }
 
 .btn-add {
-  color: #4caf50;
-  border-color: #4caf50;
+  color: var(--color-success);
+  border-color: var(--color-success);
 }
 
 .btn-add:hover:not(:disabled) {
-  background: #4caf50;
+  background: var(--color-success);
   color: white;
-  border-color: #4caf50;
+  border-color: var(--color-success);
 }
 
 .btn-remove {
-  color: #f44336;
-  border-color: #f44336;
+  color: var(--color-error);
+  border-color: var(--color-error);
 }
 
 .btn-remove:hover:not(:disabled) {
-  background: #f44336;
+  background: var(--color-error);
   color: white;
-  border-color: #f44336;
+  border-color: var(--color-error);
 }
 </style>

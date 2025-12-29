@@ -18,7 +18,7 @@
         >
           <div v-if="currentColor === TRANSPARENT" class="checkered-bg"></div>
         </div>
-        <div class="current-color-name">{{ getColorName(currentColor) }}</div>
+        <div class="current-color-name" v-html="getColorName(currentColor)"></div>
       </div>
     </div>
 
@@ -66,23 +66,26 @@ const getColorName = (color) => {
     return 'Transparent / Empty'
   }
   const dmcColor = allDMCColors.find(c => c.hex === color)
-  return dmcColor ? `DMC ${dmcColor.code} - ${dmcColor.name}` : color
+  return dmcColor ? `<p>DMC ${dmcColor.code}</p><p>${dmcColor.name}</p>` : color
 }
 </script>
 
 <style scoped>
 .palette {
-  background: white;
+  background: var(--bg-elevated);
   padding: 1rem;
-  border-radius: 8px;
+  border-radius: 10px;
   display: flex;
   flex-direction: column;
   gap: 1rem;
+  flex:1;
+  border: 1px solid var(--border-color-hover);
+  box-shadow: var(--shadow-sm);
 }
 
 .palette h3 {
   margin: 0;
-  color: #333;
+  color: var(--text-primary);
   font-size: 1rem;
 }
 
@@ -95,7 +98,7 @@ const getColorName = (color) => {
 
 .current-color-display label {
   font-weight: 500;
-  color: #333;
+  color: var(--text-primary);
   font-size: 0.9rem;
 }
 
@@ -104,7 +107,7 @@ const getColorName = (color) => {
   align-items: center;
   gap: 1rem;
   padding: 0.75rem;
-  background: #f9f9f9;
+  background: var(--bg-secondary);
   border-radius: 4px;
 }
 
@@ -112,9 +115,9 @@ const getColorName = (color) => {
   width: 60px;
   height: 60px;
   border-radius: 4px;
-  border: 3px solid #667eea;
+  border: 3px solid var(--color-primary);
   flex-shrink: 0;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  box-shadow: var(--shadow-sm);
 }
 
 .current-color-swatch.transparent {
@@ -124,26 +127,29 @@ const getColorName = (color) => {
 
 .current-color-name {
   font-weight: 500;
-  color: #333;
+  color: var(--text-primary);
   font-size: 0.85rem;
   line-height: 1.3;
   flex: 1;
+}
+
+.current-color-name :deep(p) {
+  margin: 0;
 }
 
 .palette-colors {
   display: flex;
   flex-wrap: wrap;
   gap: 0.4rem;
-  max-height: 400px;
   overflow-y: auto;
   padding: 0.25rem;
 }
 
 .palette-color {
-  width: 32px;
-  height: 32px;
+  width: 24px;
+  height: 24px;
   border-radius: 4px;
-  border: 2px solid #ddd;
+  border: 2px solid var(--border-color);
   cursor: pointer;
   transition: all 0.2s;
 }
@@ -154,9 +160,9 @@ const getColorName = (color) => {
 }
 
 .palette-color.active {
-  border-color: #667eea;
+  border-color: var(--color-primary);
   border-width: 3px;
-  box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
+  box-shadow: 0 0 0 2px rgba(212, 185, 162, 0.25);
 }
 
 .palette-color.transparent {
@@ -168,10 +174,10 @@ const getColorName = (color) => {
   width: 100%;
   height: 100%;
   background-image:
-    linear-gradient(45deg, #ccc 25%, transparent 25%),
-    linear-gradient(-45deg, #ccc 25%, transparent 25%),
-    linear-gradient(45deg, transparent 75%, #ccc 75%),
-    linear-gradient(-45deg, transparent 75%, #ccc 75%);
+    linear-gradient(45deg, var(--text-tertiary) 25%, transparent 25%),
+    linear-gradient(-45deg, var(--text-tertiary) 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, var(--text-tertiary) 75%),
+    linear-gradient(-45deg, transparent 75%, var(--text-tertiary) 75%);
   background-size: 10px 10px;
   background-position: 0 0, 0 5px, 5px -5px, -5px 0px;
 }
