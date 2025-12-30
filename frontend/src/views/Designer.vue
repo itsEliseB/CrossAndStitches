@@ -496,35 +496,6 @@ const removeColumnRight = () => {
   }
 }
 
-// Helper function to draw checkered pattern for transparent cells
-const drawCheckeredPattern = (x, y, size) => {
-  const checkSize = size / 4
-
-  // Get theme-aware colors from CSS variables
-  const styles = getComputedStyle(document.documentElement)
-  const bgColor = styles.getPropertyValue('--bg-secondary').trim() || '#FFFFFF'
-  const checkerColor = styles.getPropertyValue('--btn-primary-bg').trim() || '#6F5B4A'
-
-  // Fill background
-  ctx.fillStyle = bgColor
-  ctx.fillRect(x, y, size, size)
-
-  // Draw checkered pattern with primary button color
-  ctx.fillStyle = checkerColor
-  for (let cy = 0; cy < 4; cy++) {
-    for (let cx = 0; cx < 4; cx++) {
-      if ((cx + cy) % 2 === 0) {
-        ctx.fillRect(
-          x + cx * checkSize,
-          y + cy * checkSize,
-          checkSize,
-          checkSize
-        )
-      }
-    }
-  }
-}
-
 // Throttled render function using requestAnimationFrame
 const scheduleRender = () => {
   if (pendingRenderFrame !== null) return // Already scheduled
@@ -553,8 +524,8 @@ const renderGrid = () => {
       const cellY = y * cellSize.value
 
       if (isTransparent(color)) {
-        // Draw checkered pattern for transparent cells
-        drawCheckeredPattern(cellX, cellY, cellSize.value)
+        // Clear transparent cells - they'll show the canvas CSS background
+        ctx.clearRect(cellX, cellY, cellSize.value, cellSize.value)
       } else {
         // Draw solid color
         ctx.fillStyle = color
@@ -565,17 +536,16 @@ const renderGrid = () => {
 
   // Draw grid lines (different styles for multiples of 5 and 10)
   for (let x = 0; x <= gridWidth.value; x++) {
+    ctx.strokeStyle = '#aaa'
     if (x % 10 === 0) {
       // Bold dark line every 10 columns
-      ctx.strokeStyle = '#444'
+      ctx.strokeStyle = '#888'
       ctx.lineWidth = 2
     } else if (x % 5 === 0) {
       // Medium line every 5 columns (but not 10)
-      ctx.strokeStyle = '#888'
-      ctx.lineWidth = 1.5
+      ctx.lineWidth = 2
     } else {
       // Regular thin line
-      ctx.strokeStyle = '#aaa'
       ctx.lineWidth = 1
     }
 
@@ -586,17 +556,16 @@ const renderGrid = () => {
   }
 
   for (let y = 0; y <= gridHeight.value; y++) {
+    ctx.strokeStyle = '#aaa'
     if (y % 10 === 0) {
       // Bold dark line every 10 rows
-      ctx.strokeStyle = '#444'
+      ctx.strokeStyle = '#888'
       ctx.lineWidth = 2
     } else if (y % 5 === 0) {
       // Medium line every 5 rows (but not 10)
-      ctx.strokeStyle = '#888'
-      ctx.lineWidth = 1.5
+      ctx.lineWidth = 2
     } else {
       // Regular thin line
-      ctx.strokeStyle = '#aaa'
       ctx.lineWidth = 1
     }
 
@@ -1143,7 +1112,7 @@ onMounted(async () => {
 /* Canvas container */
 .canvas-container {
   position: relative;
-  background: var(--bg-elevated);
+  background: white;
   padding: 1rem 2rem 2rem 1rem;
   border-radius: 12px;
   box-shadow: var(--shadow-lg);
@@ -1201,13 +1170,18 @@ onMounted(async () => {
 .axis-number {
   display: flex;
   font-size: 12px;
-  color: var(--text-secondary);
-  font-family: monospace;
+  color: var(--color-gray-600);
   font-weight: 600;
 }
 
 canvas {
   border: 2px solid var(--border-color);
+  background: linear-gradient(45deg, var(--color-gray-300) 25%, transparent 25%),
+              linear-gradient(-45deg, var(--color-gray-300) 25%, transparent 25%),
+              linear-gradient(45deg, transparent 75%, var(--color-gray-300) 75%),
+              linear-gradient(-45deg, transparent 75%, var(--color-gray-300) 75%);
+  background-size: 10px 10px;
+  background-position: 0 0, 0 5px, 5px -5px, -5px 0px;
   image-rendering: -moz-crisp-edges;
   image-rendering: -webkit-crisp-edges;
   image-rendering: pixelated;

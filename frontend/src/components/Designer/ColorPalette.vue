@@ -174,10 +174,10 @@ const getColorName = (color) => {
   width: 100%;
   height: 100%;
   background-image:
-    linear-gradient(45deg, var(--text-tertiary) 25%, transparent 25%),
-    linear-gradient(-45deg, var(--text-tertiary) 25%, transparent 25%),
-    linear-gradient(45deg, transparent 75%, var(--text-tertiary) 75%),
-    linear-gradient(-45deg, transparent 75%, var(--text-tertiary) 75%);
+    linear-gradient(45deg, var(--checkered-bg) 25%, transparent 25%),
+    linear-gradient(-45deg, var(--checkered-bg) 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, var(--checkered-bg) 75%),
+    linear-gradient(-45deg, transparent 75%, var(--checkered-bg) 75%);
   background-size: 10px 10px;
   background-position: 0 0, 0 5px, 5px -5px, -5px 0px;
 }

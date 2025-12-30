@@ -33,20 +33,20 @@
   --color-info-hover: #2563eb;
   --color-info-light: #60a5fa;
 
-  /* Neutral colors (Warm neutrals) */
+  /* Neutral colors (Blue-gray/Slate neutrals) */
   --color-white: #ffffff;
   --color-black: #000000;
 
-  --color-gray-50: #fafaf9;
-  --color-gray-100: #f5f5f4;
-  --color-gray-200: #e7e5e4;
-  --color-gray-300: #d6d3d1;
-  --color-gray-400: #a8a29e;
-  --color-gray-500: #78716c;
-  --color-gray-600: #57534e;
-  --color-gray-700: #44403c;
-  --color-gray-800: #292524;
-  --color-gray-900: #1c1917;
+  --color-gray-50: #f8fafc;
+  --color-gray-100: #f1f5f9;
+  --color-gray-200: #e2e8f0;
+  --color-gray-300: #cbd5e1;
+  --color-gray-400: #94a3b8;
+  --color-gray-500: #64748b;
+  --color-gray-600: #475569;
+  --color-gray-700: #334155;
+  --color-gray-800: #1e293b;
+  --color-gray-900: #0f172a;
 
   /* ========== Spacing ========== */
   --spacing-xs: 0.25rem;    /* 4px */
@@ -110,21 +110,24 @@
   --z-tooltip: 1070;
 
   /* ========== Semantic theme colors (light mode) - Premium ========== */
-  --bg-primary: #fafaf9;
-  --bg-secondary: #f5f3f0;
-  --bg-tertiary: #fafaf9;
+  --bg-primary: #f8fafc;
+  --bg-secondary: #f1f5f9;
+  --bg-tertiary: #f8fafc;
   --bg-elevated: #ffffff;
 
-  --text-primary: #1c1917;
-  --text-secondary: #57534e;
-  --text-tertiary: #78716c;
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-tertiary: #64748b;
   --text-inverse: #ffffff;
 
-  --border-color: #e7e5e4;
-  --border-color-hover: #d6d3d1;
+  --border-color: #e2e8f0;
+  --border-color-hover: #cbd5e1;
 
   --surface-color: #ffffff;
-  --surface-hover: #fafaf9;
+  --surface-hover: #f8fafc;
+
+  /* Checkered background for transparent cells */
+  --checkered-bg: #cbd5e1;
 }
 
 /* ========== Dark Theme ========== */
@@ -140,21 +143,24 @@
   --btn-primary-bg-hover: #6F5B4A;
 
   /* Semantic theme colors (dark mode) - Premium deep tones with better contrast */
-  --bg-primary: #0f0e0d;
-  --bg-secondary: #1a1816;
-  --bg-tertiary: #0f0e0d;
-  --bg-elevated: #252220;
+  --bg-primary: #0f172a;
+  --bg-secondary: #1e293b;
+  --bg-tertiary: #0f172a;
+  --bg-elevated: #1e293b;
 
-  --text-primary: #faf8f5;
-  --text-secondary: #d6d3cf;
-  --text-tertiary: #afa9a3;
-  --text-inverse: #0f0e0d;
+  --text-primary: #f8fafc;
+  --text-secondary: #cbd5e1;
+  --text-tertiary: #94a3b8;
+  --text-inverse: #0f172a;
 
-  --border-color: #3a3430;
-  --border-color-hover: #4f4a45;
+  --border-color: #334155;
+  --border-color-hover: #475569;
 
-  --surface-color: #1f1c1a;
-  --surface-hover: #2a2624;
+  --surface-color: #1e293b;
+  --surface-hover: #334155;
+
+  /* Checkered background for transparent cells */
+  --checkered-bg: #475569;
 
   /* Premium shadows with subtle warm glow */
   --shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.5);
