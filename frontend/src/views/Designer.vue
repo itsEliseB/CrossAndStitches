@@ -42,9 +42,11 @@
         <aside class="tools-sidebar" :style="{ width: `${sidebarWidth}px` }">
           <div class="resize-handle" @mousedown="startResize"></div>
           <SettingsPanel v-model:currentColor="currentColor" v-model:tool="tool" v-model:brushSize="brushSize"
-            v-model:gridWidth="gridWidth" v-model:gridHeight="gridHeight" :hovered-color-info="hoveredColorInfo"
-            :show-clear-button="!isEditMode" :show-grid-size="!isEditMode" @clear-grid="clearGrid"
-            @resize="resizeGrid" />
+            v-model:stitchType="stitchType" v-model:gridWidth="gridWidth" v-model:gridHeight="gridHeight"
+            :hovered-color-info="hoveredColorInfo" :show-clear-button="!isEditMode" :show-grid-size="!isEditMode"
+            @clear-grid="clearGrid" @resize="resizeGrid" />
+
+          <UsedColorsList :grid="grid" />
 
           <ColorPalette v-model:currentColor="currentColor" :palette-colors="paletteColors" />
         </aside>
@@ -101,6 +103,7 @@ import SettingsPanel from '../components/Designer/SettingsPanel.vue'
 import GridControls from '../components/Designer/GridControls.vue'
 import ColorPalette from '../components/Designer/ColorPalette.vue'
 import SavePanel from '../components/Designer/SavePanel.vue'
+import UsedColorsList from '../components/Designer/UsedColorsList.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -189,7 +192,8 @@ const stopPanning = () => {
 // Drawing state
 const grid = ref([])
 const currentColor = ref('#C72B3B')  // Default to DMC 321 Red
-const tool = ref('draw')  // 'draw', 'erase', 'bucket', 'eyedropper', or 'hand'
+const tool = ref('draw')  // 'draw', 'erase', 'bucket', 'eyedropper', 'hand'
+const stitchType = ref('full')  // 'full', 'halfForward', 'halfBackward'
 const brushSize = ref(1)  // Brush size: 1x1, 2x2, 3x3, etc.
 const isDrawing = ref(false)
 const startingTool = ref(null)  // Track tool at start of drawing operation
@@ -496,6 +500,51 @@ const removeColumnRight = () => {
   }
 }
 
+// Helper functions for grid cell structure
+const getCellColor = (cell) => {
+  if (!cell || isTransparent(cell)) return TRANSPARENT
+  return typeof cell === 'string' ? cell : cell.color
+}
+
+const getCellType = (cell) => {
+  if (!cell || isTransparent(cell)) return null
+  return typeof cell === 'string' ? 'full' : cell.type
+}
+
+const getCellDirection = (cell) => {
+  if (!cell || typeof cell === 'string') return null
+  return cell.direction
+}
+
+const createCell = (color, type = 'full', direction = null) => {
+  if (isTransparent(color)) return TRANSPARENT
+  if (type === 'full') return color  // Backward compatibility
+  return { color, type, direction }
+}
+
+// Helper function to get stitch direction from stitchType
+const getStitchDirection = (stitchTypeValue) => {
+  if (stitchTypeValue === 'halfForward') return '/'
+  if (stitchTypeValue === 'halfBackward') return '\\'
+  return null
+}
+
+// Helper function to darken a hex color
+const darkenColor = (hex, amount = 0.3) => {
+  // Convert hex to RGB
+  const r = parseInt(hex.slice(1, 3), 16)
+  const g = parseInt(hex.slice(3, 5), 16)
+  const b = parseInt(hex.slice(5, 7), 16)
+
+  // Darken by reducing each component
+  const darkR = Math.floor(r * (1 - amount))
+  const darkG = Math.floor(g * (1 - amount))
+  const darkB = Math.floor(b * (1 - amount))
+
+  // Convert back to hex
+  return `#${darkR.toString(16).padStart(2, '0')}${darkG.toString(16).padStart(2, '0')}${darkB.toString(16).padStart(2, '0')}`
+}
+
 // Helper function to draw checkered pattern for transparent cells
 const drawCheckeredPattern = (x, y, size) => {
   const checkSize = size / 4
@@ -515,6 +564,124 @@ const drawCheckeredPattern = (x, y, size) => {
       }
     }
   }
+}
+
+// Helper function to draw half stitch (hexagon shape with small pointed tips and flat sides)
+const drawHalfStitch = (x, y, size, color, direction) => {
+  ctx.fillStyle = color
+
+  const width = size * 0.45        // Width of the hexagon (perpendicular to diagonal)
+  const inset = size * 0         // Small inset from edges
+  const tipLength = size * 0.25    // Length of the pointed tip (smaller = pointier)
+
+  ctx.beginPath()
+
+  if (direction === '/') {
+    // Top-right to bottom-left diagonal - draw hexagon
+    const x1 = x + size - inset  // Top-right tip point
+    const y1 = y + inset
+    const x2 = x + inset          // Bottom-left tip point
+    const y2 = y + size - inset
+
+    // Calculate direction vector (normalized)
+    const dx = x2 - x1
+    const dy = y2 - y1
+    const length = Math.sqrt(dx * dx + dy * dy)
+    const dirX = dx / length
+    const dirY = dy / length
+
+    // Perpendicular vector (rotated 90 degrees)
+    const perpX = -dirY
+    const perpY = dirX
+    const perpOffset = width / 2
+
+    // Calculate 6 points of hexagon
+    // Tip 1 (top-right)
+    const p1x = x1
+    const p1y = y1
+
+    // Start of flat side (near tip 1)
+    const p2x = x1 + dirX * tipLength + perpX * perpOffset
+    const p2y = y1 + dirY * tipLength + perpY * perpOffset
+
+    // End of flat side (near tip 2)
+    const p3x = x2 - dirX * tipLength + perpX * perpOffset
+    const p3y = y2 - dirY * tipLength + perpY * perpOffset
+
+    // Tip 2 (bottom-left)
+    const p4x = x2
+    const p4y = y2
+
+    // Other side flat edge (near tip 2)
+    const p5x = x2 - dirX * tipLength - perpX * perpOffset
+    const p5y = y2 - dirY * tipLength - perpY * perpOffset
+
+    // Other side flat edge (near tip 1)
+    const p6x = x1 + dirX * tipLength - perpX * perpOffset
+    const p6y = y1 + dirY * tipLength - perpY * perpOffset
+
+    // Draw hexagon
+    ctx.moveTo(p1x, p1y)
+    ctx.lineTo(p2x, p2y)
+    ctx.lineTo(p3x, p3y)
+    ctx.lineTo(p4x, p4y)
+    ctx.lineTo(p5x, p5y)
+    ctx.lineTo(p6x, p6y)
+  } else {
+    // Top-left to bottom-right diagonal - draw hexagon
+    const x1 = x + inset          // Top-left tip point
+    const y1 = y + inset
+    const x2 = x + size - inset  // Bottom-right tip point
+    const y2 = y + size - inset
+
+    // Calculate direction vector (normalized)
+    const dx = x2 - x1
+    const dy = y2 - y1
+    const length = Math.sqrt(dx * dx + dy * dy)
+    const dirX = dx / length
+    const dirY = dy / length
+
+    // Perpendicular vector (rotated 90 degrees)
+    const perpX = -dirY
+    const perpY = dirX
+    const perpOffset = width / 2
+
+    // Calculate 6 points of hexagon
+    // Tip 1 (top-left)
+    const p1x = x1
+    const p1y = y1
+
+    // Start of flat side (near tip 1)
+    const p2x = x1 + dirX * tipLength + perpX * perpOffset
+    const p2y = y1 + dirY * tipLength + perpY * perpOffset
+
+    // End of flat side (near tip 2)
+    const p3x = x2 - dirX * tipLength + perpX * perpOffset
+    const p3y = y2 - dirY * tipLength + perpY * perpOffset
+
+    // Tip 2 (bottom-right)
+    const p4x = x2
+    const p4y = y2
+
+    // Other side flat edge (near tip 2)
+    const p5x = x2 - dirX * tipLength - perpX * perpOffset
+    const p5y = y2 - dirY * tipLength - perpY * perpOffset
+
+    // Other side flat edge (near tip 1)
+    const p6x = x1 + dirX * tipLength - perpX * perpOffset
+    const p6y = y1 + dirY * tipLength - perpY * perpOffset
+
+    // Draw hexagon
+    ctx.moveTo(p1x, p1y)
+    ctx.lineTo(p2x, p2y)
+    ctx.lineTo(p3x, p3y)
+    ctx.lineTo(p4x, p4y)
+    ctx.lineTo(p5x, p5y)
+    ctx.lineTo(p6x, p6y)
+  }
+
+  ctx.closePath()
+  ctx.fill()
 }
 
 // Throttled render function using requestAnimationFrame
@@ -540,15 +707,22 @@ const renderGrid = () => {
   // Draw cells
   for (let y = 0; y < gridHeight.value; y++) {
     for (let x = 0; x < gridWidth.value; x++) {
-      const color = grid.value[y][x]
+      const cell = grid.value[y][x]
       const cellX = x * cellSize.value
       const cellY = y * cellSize.value
+      const color = getCellColor(cell)
+      const type = getCellType(cell)
+      const direction = getCellDirection(cell)
 
       if (isTransparent(color)) {
-        // Draw checkered pattern for transparent cells
-        drawCheckeredPattern(cellX, cellY, cellSize.value)
+        // Clear transparent cells - they'll show the canvas CSS background
+        ctx.clearRect(cellX, cellY, cellSize.value, cellSize.value)
+      } else if (type === 'half') {
+        // Clear cell first to make it transparent, then draw half stitch line
+        ctx.clearRect(cellX, cellY, cellSize.value, cellSize.value)
+        drawHalfStitch(cellX, cellY, cellSize.value, color, direction)
       } else {
-        // Draw solid color
+        // Draw full stitch (solid color)
         ctx.fillStyle = color
         ctx.fillRect(cellX, cellY, cellSize.value, cellSize.value)
       }
@@ -604,9 +778,19 @@ const renderGrid = () => {
     const radius = Math.floor(brushSize.value / 2)
 
     // Draw semi-transparent overlay for brush area
-    ctx.fillStyle = tool.value === 'draw'
-      ? 'rgba(102, 126, 234, 0.3)'  // Blue tint for draw
-      : 'rgba(220, 53, 69, 0.3)'    // Red tint for erase
+    const isHalfStitch = tool.value === 'draw' && stitchType.value !== 'full'
+
+    // Use current color for draw tool, red for erase
+    if (tool.value === 'draw') {
+      // Convert hex to rgba with opacity
+      const hex = currentColor.value
+      const r = parseInt(hex.slice(1, 3), 16)
+      const g = parseInt(hex.slice(3, 5), 16)
+      const b = parseInt(hex.slice(5, 7), 16)
+      ctx.fillStyle = `rgba(${r}, ${g}, ${b}, 0.3)`
+    } else {
+      ctx.fillStyle = 'rgba(220, 53, 69, 0.3)'  // Red tint for erase
+    }
 
     for (let dy = -radius; dy < brushSize.value - radius; dy++) {
       for (let dx = -radius; dx < brushSize.value - radius; dx++) {
@@ -617,13 +801,98 @@ const renderGrid = () => {
           targetY >= 0 && targetY < gridHeight.value) {
           const cellX = targetX * cellSize.value
           const cellY = targetY * cellSize.value
-          ctx.fillRect(cellX, cellY, cellSize.value, cellSize.value)
+
+          if (isHalfStitch) {
+            // Draw diagonal preview for half stitch (hexagon shape)
+            const prevFillStyle = ctx.fillStyle
+            ctx.fillStyle = `rgba(${currentColor}, 0.3)`
+
+            const width = cellSize.value * 0.45
+            const inset = cellSize.value * 0
+            const tipLength = cellSize.value * 0.25
+
+            ctx.beginPath()
+
+            if (getStitchDirection(stitchType.value) === '/') {
+              const x1 = cellX + cellSize.value - inset
+              const y1 = cellY + inset
+              const x2 = cellX + inset
+              const y2 = cellY + cellSize.value - inset
+
+              const dx = x2 - x1
+              const dy = y2 - y1
+              const length = Math.sqrt(dx * dx + dy * dy)
+              const dirX = dx / length
+              const dirY = dy / length
+              const perpX = -dirY
+              const perpY = dirX
+              const perpOffset = width / 2
+
+              const p1x = x1, p1y = y1
+              const p2x = x1 + dirX * tipLength + perpX * perpOffset
+              const p2y = y1 + dirY * tipLength + perpY * perpOffset
+              const p3x = x2 - dirX * tipLength + perpX * perpOffset
+              const p3y = y2 - dirY * tipLength + perpY * perpOffset
+              const p4x = x2, p4y = y2
+              const p5x = x2 - dirX * tipLength - perpX * perpOffset
+              const p5y = y2 - dirY * tipLength - perpY * perpOffset
+              const p6x = x1 + dirX * tipLength - perpX * perpOffset
+              const p6y = y1 + dirY * tipLength - perpY * perpOffset
+
+              ctx.moveTo(p1x, p1y)
+              ctx.lineTo(p2x, p2y)
+              ctx.lineTo(p3x, p3y)
+              ctx.lineTo(p4x, p4y)
+              ctx.lineTo(p5x, p5y)
+              ctx.lineTo(p6x, p6y)
+            } else {
+              const x1 = cellX + inset
+              const y1 = cellY + inset
+              const x2 = cellX + cellSize.value - inset
+              const y2 = cellY + cellSize.value - inset
+
+              const dx = x2 - x1
+              const dy = y2 - y1
+              const length = Math.sqrt(dx * dx + dy * dy)
+              const dirX = dx / length
+              const dirY = dy / length
+              const perpX = -dirY
+              const perpY = dirX
+              const perpOffset = width / 2
+
+              const p1x = x1, p1y = y1
+              const p2x = x1 + dirX * tipLength + perpX * perpOffset
+              const p2y = y1 + dirY * tipLength + perpY * perpOffset
+              const p3x = x2 - dirX * tipLength + perpX * perpOffset
+              const p3y = y2 - dirY * tipLength + perpY * perpOffset
+              const p4x = x2, p4y = y2
+              const p5x = x2 - dirX * tipLength - perpX * perpOffset
+              const p5y = y2 - dirY * tipLength - perpY * perpOffset
+              const p6x = x1 + dirX * tipLength - perpX * perpOffset
+              const p6y = y1 + dirY * tipLength - perpY * perpOffset
+
+              ctx.moveTo(p1x, p1y)
+              ctx.lineTo(p2x, p2y)
+              ctx.lineTo(p3x, p3y)
+              ctx.lineTo(p4x, p4y)
+              ctx.lineTo(p5x, p5y)
+              ctx.lineTo(p6x, p6y)
+            }
+
+            ctx.closePath()
+            ctx.fill()
+
+            // Restore previous state
+            ctx.fillStyle = prevFillStyle
+          } else {
+            ctx.fillRect(cellX, cellY, cellSize.value, cellSize.value)
+          }
         }
       }
     }
 
     // Draw outline around brush area
-    ctx.strokeStyle = tool.value === 'draw' ? '#667eea' : '#dc3545'
+    ctx.strokeStyle = tool.value === 'draw' ? darkenColor(currentColor.value, 0.4) : '#dc3545'
     ctx.lineWidth = 2
 
     const startX = (x - radius) * cellSize.value
@@ -673,17 +942,12 @@ const stopDrawing = () => {
 
   if (isDrawing.value) {
     isDrawing.value = false
-    // Don't capture state for eyedropper (it doesn't modify the grid)
-    // Check the starting tool, not current tool (eyedropper changes it)
-    if (startingTool.value !== 'eyedropper') {
-      captureState()  // Capture state after drawing completes
-    }
     startingTool.value = null
   }
 }
 
 // Apply brush at given position with current brush size
-const applyBrush = (centerX, centerY, color) => {
+const applyBrush = (centerX, centerY, cellData) => {
   const radius = Math.floor(brushSize.value / 2)
 
   for (let dy = -radius; dy < brushSize.value - radius; dy++) {
@@ -694,7 +958,7 @@ const applyBrush = (centerX, centerY, color) => {
       // Check bounds
       if (targetX >= 0 && targetX < gridWidth.value &&
         targetY >= 0 && targetY < gridHeight.value) {
-        grid.value[targetY][targetX] = color
+        grid.value[targetY][targetX] = cellData
       }
     }
   }
@@ -705,7 +969,13 @@ const drawPixel = (event) => {
 
   if (x >= 0 && x < gridWidth.value && y >= 0 && y < gridHeight.value) {
     if (tool.value === 'draw') {
-      applyBrush(x, y, currentColor.value)
+      if (stitchType.value === 'full') {
+        applyBrush(x, y, currentColor.value)
+      } else {
+        const direction = getStitchDirection(stitchType.value)
+        const cellData = createCell(currentColor.value, 'half', direction)
+        applyBrush(x, y, cellData)
+      }
       renderGrid()
     } else if (tool.value === 'erase') {
       applyBrush(x, y, TRANSPARENT)
@@ -717,7 +987,8 @@ const drawPixel = (event) => {
       // floodFill calls renderGrid() internally
     } else if (tool.value === 'eyedropper') {
       // Pick color from clicked cell
-      const pickedColor = grid.value[y][x]
+      const pickedCell = grid.value[y][x]
+      const pickedColor = getCellColor(pickedCell)
       if (!isTransparent(pickedColor)) {
         currentColor.value = pickedColor
       }
@@ -856,7 +1127,9 @@ const saveDesign = async () => {
 
   try {
     // Extract unique colors (palette) excluding transparent
-    const palette = [...new Set(grid.value.flat())].filter(c => !isTransparent(c))
+    const palette = [...new Set(
+      grid.value.flat().map(cell => getCellColor(cell))
+    )].filter(c => !isTransparent(c))
 
     // Generate default title if empty
     let finalTitle = title.value.trim()
@@ -1201,6 +1474,7 @@ canvas {
 }
 
 canvas[data-tool="draw"],
+canvas[data-tool="halfStitch"],
 canvas[data-tool="erase"],
 canvas[data-tool="bucket"] {
   cursor: crosshair;

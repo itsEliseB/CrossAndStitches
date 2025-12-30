@@ -68,6 +68,30 @@
       </div>
     </div>
 
+    <div class="setting-group" v-if="tool === 'draw'">
+      <label>Stitch Type:</label>
+      <div>
+        <button @click="$emit('update:stitchType', 'full')" @mouseenter="hoveredStitchType = 'full'"
+          @mouseleave="hoveredStitchType = null" :class="['btn', 'btn-small', { active: stitchType === 'full' }]" title="Full Stitch">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="4" y="4" width="16" height="16" />
+          </svg>
+        </button>
+        <button @click="$emit('update:stitchType', 'halfForward')" @mouseenter="hoveredStitchType = 'halfForward'"
+          @mouseleave="hoveredStitchType = null" :class="['btn', 'btn-small', { active: stitchType === 'halfForward' }]" title="Half Stitch (/)">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+            <path d="M3 21 L21 3" />
+          </svg>
+        </button>
+        <button @click="$emit('update:stitchType', 'halfBackward')" @mouseenter="hoveredStitchType = 'halfBackward'"
+          @mouseleave="hoveredStitchType = null" :class="['btn', 'btn-small', { active: stitchType === 'halfBackward' }]" title="Half Stitch (\)">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+            <path d="M3 3 L21 21" />
+          </svg>
+        </button>
+      </div>
+    </div>
+
     <div class="setting-group" v-if="tool === 'draw' || tool === 'erase'">
       <label>Brush Size:</label>
       <div>
@@ -120,6 +144,10 @@ const props = defineProps({
     type: Number,
     required: true
   },
+  stitchType: {
+    type: String,
+    default: 'full'
+  },
   hoveredColorInfo: {
     type: Object,
     default: null
@@ -142,7 +170,7 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['update:currentColor', 'update:tool', 'update:brushSize', 'clearGrid', 'update:gridWidth', 'update:gridHeight', 'resize'])
+const emit = defineEmits(['update:currentColor', 'update:tool', 'update:brushSize', 'update:stitchType', 'clearGrid', 'update:gridWidth', 'update:gridHeight', 'resize'])
 
 // Local grid size state (for inputs)
 const localGridWidth = ref(props.gridWidth)
@@ -165,6 +193,7 @@ const applyGridSize = () => {
 
 // Tool name display logic
 const hoveredTool = ref(null)
+const hoveredStitchType = ref(null)
 
 const toolNames = {
   draw: 'Draw',
@@ -265,7 +294,15 @@ const displayedToolName = computed(() => {
   font-size: 0.85rem;
   width: 32px;
   height: 32px;
-  
+}
+
+.btn-direction {
+  padding: 0.4rem;
+  width: 36px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* Eyedropper color info display */
