@@ -5,7 +5,7 @@
  */
 
 // Complete DMC color palette (454 colors)
-export const allDMCColors = [
+const dmcColorsUnsorted = [
   { code: "3713", name: "Salmon Very Light", hex: "#FFE2E2" },
   { code: "761", name: "Salmon Light", hex: "#FFC9C9" },
   { code: "760", name: "Salmon", hex: "#F5ADAD" },
@@ -439,6 +439,24 @@ export const allDMCColors = [
   { code: "208", name: "Lavender Very Dark", hex: "#893B67" },
   { code: "3836", name: "Grape Light", hex: "#B57593" },
 ];
+
+// Sort DMC colors: non-numeric codes first (alphabetically), then numeric codes (by number)
+export const allDMCColors = dmcColorsUnsorted.sort((a, b) => {
+  const aIsNumeric = /^\d+$/.test(a.code)
+  const bIsNumeric = /^\d+$/.test(b.code)
+
+  // Non-numeric codes come first
+  if (!aIsNumeric && bIsNumeric) return -1
+  if (aIsNumeric && !bIsNumeric) return 1
+
+  // Both non-numeric: sort alphabetically
+  if (!aIsNumeric && !bIsNumeric) {
+    return a.code.localeCompare(b.code)
+  }
+
+  // Both numeric: sort by number value
+  return parseInt(a.code) - parseInt(b.code)
+});
 
 // Popular/common DMC colors for quick access (subset of above)
 export const popularDMCColors = allDMCColors.filter(c =>

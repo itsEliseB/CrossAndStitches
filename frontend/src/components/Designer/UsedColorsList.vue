@@ -14,10 +14,11 @@
     <template v-else>
       <!-- Selected Color Detail Display -->
       <div v-if="selectedColor" class="selected-color-display">
-        <div class="selected-color-swatch" :style="{ backgroundColor: selectedColor.hex }"></div>
+        <div class="selected-color-swatch" :style="{ backgroundColor: selectedColor.hex }">
+          <span class="swatch-code" :style="{ color: getTextColor(selectedColor.hex) }">{{ selectedColor.code }}</span>
+        </div>
         <div class="selected-color-info">
-          <div class="color-code">DMC {{ selectedColor.code }}</div>
-          <div class="color-name">{{ selectedColor.name }}</div>
+          <div class="color-name">{{ selectedColor.name }} </div>
           <div class="stitch-count">{{ selectedColor.stitchCount }} stitches</div>
         </div>
       </div>
@@ -52,13 +53,24 @@ const props = defineProps({
 // Selected color for detail view
 const selectedColor = ref(null)
 
-// Helper function to extract color from cell (handles both string and object formats)
-const getCellColor = (cell) => {
-  if (!cell || isTransparent(cell)) return TRANSPARENT
+// Helper function to extract colors from cell (handles both string and object formats)
+const getCellColors = (cell) => {
+  if (!cell || isTransparent(cell)) return []
   // If cell is a string, it's a full stitch color
-  if (typeof cell === 'string') return cell
-  // If cell is an object, extract the color property (half stitch)
-  return cell.color
+  if (typeof cell === 'string') return [cell]
+  // If cell is an object with any type of stitches
+  const colors = []
+  if (cell.forward) colors.push(cell.forward)
+  if (cell.backward) colors.push(cell.backward)
+  if (cell.quarterTL) colors.push(cell.quarterTL)
+  if (cell.quarterTR) colors.push(cell.quarterTR)
+  if (cell.quarterBL) colors.push(cell.quarterBL)
+  if (cell.quarterBR) colors.push(cell.quarterBR)
+  if (cell.threeQuarterTL) colors.push(cell.threeQuarterTL)
+  if (cell.threeQuarterTR) colors.push(cell.threeQuarterTR)
+  if (cell.threeQuarterBL) colors.push(cell.threeQuarterBL)
+  if (cell.threeQuarterBR) colors.push(cell.threeQuarterBR)
+  return colors
 }
 
 // Compute used colors with stitch counts
@@ -68,10 +80,12 @@ const usedColorsData = computed(() => {
 
   props.grid.forEach(row => {
     row.forEach(cell => {
-      const color = getCellColor(cell)
-      if (!isTransparent(color)) {
-        colorCounts[color] = (colorCounts[color] || 0) + 1
-      }
+      const colors = getCellColors(cell)
+      colors.forEach(color => {
+        if (!isTransparent(color)) {
+          colorCounts[color] = (colorCounts[color] || 0) + 1
+        }
+      })
     })
   })
 
@@ -109,6 +123,23 @@ watch(usedColorsData, (newColors) => {
 // Select a color
 const selectColor = (colorData) => {
   selectedColor.value = colorData
+}
+
+// Calculate luminance and determine text color (black or white)
+const getTextColor = (hex) => {
+  if (!hex) return '#333'
+
+  // Convert hex to RGB
+  const hexClean = hex.replace('#', '')
+  const r = parseInt(hexClean.substring(0, 2), 16)
+  const g = parseInt(hexClean.substring(2, 4), 16)
+  const b = parseInt(hexClean.substring(4, 6), 16)
+
+  // Calculate relative luminance using WCAG formula
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255
+
+  // Return black for light colors, white for dark colors
+  return luminance > 0.5 ? '#000000' : '#FFFFFF'
 }
 </script>
 
@@ -151,11 +182,22 @@ const selectColor = (colorData) => {
 
 .selected-color-swatch {
   width: 50px;
-  height: 50px;
+  height: 100%;
   border-radius: 4px;
   border: 3px solid var(--color-primary);
   flex-shrink: 0;
   box-shadow: var(--shadow-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.selected-color-swatch .swatch-code {
+  font-size: 12px;
+  font-weight: 600;
+  user-select: none;
+  position: relative;
+  z-index: 1;
 }
 
 .selected-color-info {
@@ -196,7 +238,7 @@ const selectColor = (colorData) => {
 }
 
 .color-square {
-  width: 24px;
+  width: 36px;
   height: 24px;
   border-radius: 4px;
   border: 2px solid var(--border-color);

@@ -79,16 +79,144 @@
         </button>
         <button @click="$emit('update:stitchType', 'halfForward')" @mouseenter="hoveredStitchType = 'halfForward'"
           @mouseleave="hoveredStitchType = null" :class="['btn', 'btn-small', { active: stitchType === 'halfForward' }]" title="Half Stitch (/)">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
-            <path d="M3 21 L21 3" />
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="18" height="18" stroke-width="1.5" />
+            <line x1="3" y1="21" x2="21" y2="3" stroke-width="2.5" />
           </svg>
         </button>
         <button @click="$emit('update:stitchType', 'halfBackward')" @mouseenter="hoveredStitchType = 'halfBackward'"
           @mouseleave="hoveredStitchType = null" :class="['btn', 'btn-small', { active: stitchType === 'halfBackward' }]" title="Half Stitch (\)">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
-            <path d="M3 3 L21 21" />
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="18" height="18" stroke-width="1.5" />
+            <line x1="3" y1="3" x2="21" y2="21" stroke-width="2.5" />
           </svg>
         </button>
+
+        <!-- Quarter Stitch with dropdown -->
+        <div class="stitch-dropdown-wrapper">
+          <button @click="toggleDropdown('quarter', $event)" :class="['btn', 'btn-small', 'btn-with-dropdown', { active: isQuarterActive }]" title="Quarter Stitch">
+            <!-- Top-Left Quarter -->
+            <svg v-if="stitchType === 'quarterTL'" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="3" width="18" height="18" stroke-width="1.5" />
+              <line x1="12" y1="12" x2="3" y2="3" stroke-width="2.5" />
+            </svg>
+            <!-- Top-Right Quarter -->
+            <svg v-else-if="stitchType === 'quarterTR'" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="3" width="18" height="18" stroke-width="1.5" />
+              <line x1="12" y1="12" x2="21" y2="3" stroke-width="2.5" />
+            </svg>
+            <!-- Bottom-Left Quarter -->
+            <svg v-else-if="stitchType === 'quarterBL'" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="3" width="18" height="18" stroke-width="1.5" />
+              <line x1="12" y1="12" x2="3" y2="21" stroke-width="2.5" />
+            </svg>
+            <!-- Bottom-Right Quarter -->
+            <svg v-else-if="stitchType === 'quarterBR'" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="3" width="18" height="18" stroke-width="1.5" />
+              <line x1="12" y1="12" x2="21" y2="21" stroke-width="2.5" />
+            </svg>
+            <!-- Default (when no quarter is selected) -->
+            <svg v-else width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="3" width="18" height="18" stroke-width="1.5" />
+              <line x1="12" y1="12" x2="3" y2="3" stroke-width="2.5" />
+            </svg>
+            <span class="dropdown-arrow">▼</span>
+          </button>
+
+          <div v-if="openDropdown === 'quarter'" class="stitch-dropdown">
+            <button @click="selectQuarterStitch('TL')" :class="['dropdown-item', { active: stitchType === 'quarterTL' }]">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="18" height="18" stroke-width="1.5" />
+                <line x1="12" y1="12" x2="3" y2="3" stroke-width="2.5" />
+              </svg>
+              <span>Top-Left</span>
+            </button>
+            <button @click="selectQuarterStitch('TR')" :class="['dropdown-item', { active: stitchType === 'quarterTR' }]">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="18" height="18" stroke-width="1.5" />
+                <line x1="12" y1="12" x2="21" y2="3" stroke-width="2.5" />
+              </svg>
+              <span>Top-Right</span>
+            </button>
+            <button @click="selectQuarterStitch('BL')" :class="['dropdown-item', { active: stitchType === 'quarterBL' }]">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="18" height="18" stroke-width="1.5" />
+                <line x1="12" y1="12" x2="3" y2="21" stroke-width="2.5" />
+              </svg>
+              <span>Bottom-Left</span>
+            </button>
+            <button @click="selectQuarterStitch('BR')" :class="['dropdown-item', { active: stitchType === 'quarterBR' }]">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="18" height="18" stroke-width="1.5" />
+                <line x1="12" y1="12" x2="21" y2="21" stroke-width="2.5" />
+              </svg>
+              <span>Bottom-Right</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Three-Quarter Stitch with dropdown -->
+        <div class="stitch-dropdown-wrapper">
+          <button @click="toggleDropdown('threeQuarter', $event)" :class="['btn', 'btn-small', 'btn-with-dropdown', { active: isThreeQuarterActive }]" title="3/4 Stitch">
+            <!-- Bottom-Right 3/4 -->
+            <svg v-if="stitchType === 'threeQuarterTL'" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="3" width="18" height="18" stroke-width="1.5" />
+              <polygon points="21,3 21,21 3,21" fill="currentColor" opacity="0.7" />
+            </svg>
+            <!-- Bottom-Left 3/4 -->
+            <svg v-else-if="stitchType === 'threeQuarterTR'" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="3" width="18" height="18" stroke-width="1.5" />
+              <polygon points="3,3 3,21 21,21" fill="currentColor" opacity="0.7" />
+            </svg>
+            <!-- Top-Right 3/4 -->
+            <svg v-else-if="stitchType === 'threeQuarterBL'" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="3" width="18" height="18" stroke-width="1.5" />
+              <polygon points="3,3 21,3 21,21" fill="currentColor" opacity="0.7" />
+            </svg>
+            <!-- Top-Left 3/4 -->
+            <svg v-else-if="stitchType === 'threeQuarterBR'" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="3" width="18" height="18" stroke-width="1.5" />
+              <polygon points="3,3 21,3 3,21" fill="currentColor" opacity="0.7" />
+            </svg>
+            <!-- Default (when no three-quarter is selected) -->
+            <svg v-else width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="3" width="18" height="18" stroke-width="1.5" />
+              <polygon points="21,3 21,21 3,21" fill="currentColor" opacity="0.7" />
+            </svg>
+            <span class="dropdown-arrow">▼</span>
+          </button>
+
+          <div v-if="openDropdown === 'threeQuarter'" class="stitch-dropdown">
+            <button @click="selectThreeQuarterStitch('TL')" :class="['dropdown-item', { active: stitchType === 'threeQuarterTL' }]">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="18" height="18" stroke-width="1.5" />
+                <polygon points="21,3 21,21 3,21" fill="currentColor" opacity="0.7" />
+              </svg>
+              <span>Bottom Right</span>
+            </button>
+            <button @click="selectThreeQuarterStitch('TR')" :class="['dropdown-item', { active: stitchType === 'threeQuarterTR' }]">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="18" height="18" stroke-width="1.5" />
+                <polygon points="3,3 3,21 21,21" fill="currentColor" opacity="0.7" />
+              </svg>
+              <span>Bottom Left</span>
+            </button>
+            <button @click="selectThreeQuarterStitch('BL')" :class="['dropdown-item', { active: stitchType === 'threeQuarterBL' }]">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="18" height="18" stroke-width="1.5" />
+                <polygon points="3,3 21,3 21,21" fill="currentColor" opacity="0.7" />
+              </svg>
+              <span>Top Right</span>
+            </button>
+            <button @click="selectThreeQuarterStitch('BR')" :class="['dropdown-item', { active: stitchType === 'threeQuarterBR' }]">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="18" height="18" stroke-width="1.5" />
+                <polygon points="3,3 21,3 3,21" fill="currentColor" opacity="0.7" />
+              </svg>
+              <span>Top Left</span>
+            </button>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -129,7 +257,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 
 const props = defineProps({
   currentColor: {
@@ -206,6 +334,46 @@ const toolNames = {
 const displayedToolName = computed(() => {
   const tool = hoveredTool.value || props.tool
   return toolNames[tool] || tool
+})
+
+// Dropdown state for quarter and three-quarter stitches
+const openDropdown = ref(null) // 'quarter' or 'threeQuarter' or null
+
+const toggleDropdown = (type, event) => {
+  event.stopPropagation()
+  openDropdown.value = openDropdown.value === type ? null : type
+}
+
+const selectQuarterStitch = (corner) => {
+  emit('update:stitchType', `quarter${corner}`)
+  openDropdown.value = null
+}
+
+const selectThreeQuarterStitch = (corner) => {
+  emit('update:stitchType', `threeQuarter${corner}`)
+  openDropdown.value = null
+}
+
+// Check if a quarter or three-quarter stitch is active
+const isQuarterActive = computed(() => {
+  return props.stitchType.startsWith('quarter')
+})
+
+const isThreeQuarterActive = computed(() => {
+  return props.stitchType.startsWith('threeQuarter')
+})
+
+// Close dropdown when clicking outside
+const handleClickOutside = () => {
+  openDropdown.value = null
+}
+
+onMounted(() => {
+  document.addEventListener('click', handleClickOutside)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('click', handleClickOutside)
 })
 </script>
 
@@ -382,5 +550,82 @@ const displayedToolName = computed(() => {
   font-size: 0.85rem;
   opacity: 0.8;
   font-family: monospace;
+}
+
+/* Dropdown styles for quarter and three-quarter stitches */
+.stitch-dropdown-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.btn-with-dropdown {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.dropdown-arrow {
+  font-size: 0.6em;
+  opacity: 0.7;
+}
+
+.stitch-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  margin-top: 0.25rem;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 100;
+  min-width: 160px;
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: none;
+  background: white;
+  cursor: pointer;
+  transition: background 0.2s;
+  text-align: left;
+  font-size: 0.85rem;
+}
+
+.dropdown-item:hover {
+  background: #f5f5f5;
+}
+
+.dropdown-item.active {
+  background: #667eea;
+  color: white;
+}
+
+.dropdown-item.active svg {
+  stroke: white;
+}
+
+.dropdown-item.active svg rect {
+  fill: none;
+}
+
+.dropdown-item.active svg polygon {
+  fill: white;
+}
+
+.dropdown-item.active svg line {
+  stroke: white;
+}
+
+.dropdown-item:first-child {
+  border-radius: 4px 4px 0 0;
+}
+
+.dropdown-item:last-child {
+  border-radius: 0 0 4px 4px;
 }
 </style>

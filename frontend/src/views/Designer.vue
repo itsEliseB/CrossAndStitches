@@ -501,25 +501,144 @@ const removeColumnRight = () => {
 }
 
 // Helper functions for grid cell structure
+// Cell can be:
+// - String: full stitch color (e.g., "#C72B3B")
+// - Object: {
+//     forward: color|null,           // Half stitch /
+//     backward: color|null,          // Half stitch \
+//     quarterTL: color|null,         // Quarter stitch to top-left corner
+//     quarterTR: color|null,         // Quarter stitch to top-right corner
+//     quarterBL: color|null,         // Quarter stitch to bottom-left corner
+//     quarterBR: color|null,         // Quarter stitch to bottom-right corner
+//     threeQuarterTL: color|null,    // 3/4 stitch (top-left corner missing)
+//     threeQuarterTR: color|null,    // 3/4 stitch (top-right corner missing)
+//     threeQuarterBL: color|null,    // 3/4 stitch (bottom-left corner missing)
+//     threeQuarterBR: color|null,    // 3/4 stitch (bottom-right corner missing)
+//     lastDrawn: string              // Track which was drawn last
+//   }
+// - TRANSPARENT or null: empty cell
+
 const getCellColor = (cell) => {
   if (!cell || isTransparent(cell)) return TRANSPARENT
-  return typeof cell === 'string' ? cell : cell.color
+  if (typeof cell === 'string') return cell
+  // Return the first available color from any stitch type
+  if (cell.forward) return cell.forward
+  if (cell.backward) return cell.backward
+  if (cell.quarterTL) return cell.quarterTL
+  if (cell.quarterTR) return cell.quarterTR
+  if (cell.quarterBL) return cell.quarterBL
+  if (cell.quarterBR) return cell.quarterBR
+  if (cell.threeQuarterTL) return cell.threeQuarterTL
+  if (cell.threeQuarterTR) return cell.threeQuarterTR
+  if (cell.threeQuarterBL) return cell.threeQuarterBL
+  if (cell.threeQuarterBR) return cell.threeQuarterBR
+  return TRANSPARENT
 }
 
 const getCellType = (cell) => {
   if (!cell || isTransparent(cell)) return null
-  return typeof cell === 'string' ? 'full' : cell.type
+  if (typeof cell === 'string') return 'full'
+  // Check for mixed stitches
+  const hasHalf = cell.forward || cell.backward
+  const hasQuarter = cell.quarterTL || cell.quarterTR || cell.quarterBL || cell.quarterBR
+  const hasThreeQuarter = cell.threeQuarterTL || cell.threeQuarterTR || cell.threeQuarterBL || cell.threeQuarterBR
+  if ((hasHalf && hasQuarter) || (hasHalf && hasThreeQuarter) || (hasQuarter && hasThreeQuarter)) return 'mixed'
+  if (cell.forward && cell.backward) return 'cross' // Two overlapping half stitches
+  if (hasHalf) return 'half'
+  if (hasQuarter) return 'quarter'
+  if (hasThreeQuarter) return 'threeQuarter'
+  return null
 }
 
-const getCellDirection = (cell) => {
-  if (!cell || typeof cell === 'string') return null
-  return cell.direction
+const hasHalfStitch = (cell, direction) => {
+  if (!cell || typeof cell === 'string' || isTransparent(cell)) return false
+  return direction === '/' ? !!cell.forward : !!cell.backward
+}
+
+const getHalfStitchColor = (cell, direction) => {
+  if (!cell || typeof cell === 'string' || isTransparent(cell)) return null
+  return direction === '/' ? cell.forward : cell.backward
 }
 
 const createCell = (color, type = 'full', direction = null) => {
   if (isTransparent(color)) return TRANSPARENT
-  if (type === 'full') return color  // Backward compatibility
-  return { color, type, direction }
+  if (type === 'full') return color  // Full stitch
+  // Half stitch
+  return {
+    forward: direction === '/' ? color : null,
+    backward: direction === '\\' ? color : null
+  }
+}
+
+const addStitch = (existingCell, color, stitchType) => {
+  // If cell is empty or transparent, create new stitch cell
+  if (!existingCell || isTransparent(existingCell)) {
+    const newCell = {
+      forward: null,
+      backward: null,
+      quarterTL: null,
+      quarterTR: null,
+      quarterBL: null,
+      quarterBR: null,
+      threeQuarterTL: null,
+      threeQuarterTR: null,
+      threeQuarterBL: null,
+      threeQuarterBR: null,
+      lastDrawn: stitchType
+    }
+
+    if (stitchType === 'halfForward') newCell.forward = color
+    else if (stitchType === 'halfBackward') newCell.backward = color
+    else if (stitchType === 'quarterTL') newCell.quarterTL = color
+    else if (stitchType === 'quarterTR') newCell.quarterTR = color
+    else if (stitchType === 'quarterBL') newCell.quarterBL = color
+    else if (stitchType === 'quarterBR') newCell.quarterBR = color
+    else if (stitchType === 'threeQuarterTL') newCell.threeQuarterTL = color
+    else if (stitchType === 'threeQuarterTR') newCell.threeQuarterTR = color
+    else if (stitchType === 'threeQuarterBL') newCell.threeQuarterBL = color
+    else if (stitchType === 'threeQuarterBR') newCell.threeQuarterBR = color
+
+    return newCell
+  }
+
+  // If cell is a full stitch, replace it with new stitch
+  if (typeof existingCell === 'string') {
+    return addStitch(null, color, stitchType)
+  }
+
+  // If cell already has stitches, add or replace
+  const updatedCell = {
+    forward: existingCell.forward || null,
+    backward: existingCell.backward || null,
+    quarterTL: existingCell.quarterTL || null,
+    quarterTR: existingCell.quarterTR || null,
+    quarterBL: existingCell.quarterBL || null,
+    quarterBR: existingCell.quarterBR || null,
+    threeQuarterTL: existingCell.threeQuarterTL || null,
+    threeQuarterTR: existingCell.threeQuarterTR || null,
+    threeQuarterBL: existingCell.threeQuarterBL || null,
+    threeQuarterBR: existingCell.threeQuarterBR || null,
+    lastDrawn: stitchType
+  }
+
+  if (stitchType === 'halfForward') updatedCell.forward = color
+  else if (stitchType === 'halfBackward') updatedCell.backward = color
+  else if (stitchType === 'quarterTL') updatedCell.quarterTL = color
+  else if (stitchType === 'quarterTR') updatedCell.quarterTR = color
+  else if (stitchType === 'quarterBL') updatedCell.quarterBL = color
+  else if (stitchType === 'quarterBR') updatedCell.quarterBR = color
+  else if (stitchType === 'threeQuarterTL') updatedCell.threeQuarterTL = color
+  else if (stitchType === 'threeQuarterTR') updatedCell.threeQuarterTR = color
+  else if (stitchType === 'threeQuarterBL') updatedCell.threeQuarterBL = color
+  else if (stitchType === 'threeQuarterBR') updatedCell.threeQuarterBR = color
+
+  return updatedCell
+}
+
+// Keep addHalfStitch for backward compatibility
+const addHalfStitch = (existingCell, color, direction) => {
+  const stitchType = direction === '/' ? 'halfForward' : 'halfBackward'
+  return addStitch(existingCell, color, stitchType)
 }
 
 // Helper function to get stitch direction from stitchType
@@ -684,6 +803,109 @@ const drawHalfStitch = (x, y, size, color, direction) => {
   ctx.fill()
 }
 
+// Helper function to draw quarter stitch (line from center to corner with pointed tips at both ends)
+const drawQuarterStitch = (x, y, size, color, corner) => {
+  const centerX = x + size / 2
+  const centerY = y + size / 2
+  const lineWidth = size * 0.35
+
+  // Determine corner position
+  let cornerX, cornerY
+  if (corner === 'TL') {
+    cornerX = x
+    cornerY = y
+  } else if (corner === 'TR') {
+    cornerX = x + size
+    cornerY = y
+  } else if (corner === 'BL') {
+    cornerX = x
+    cornerY = y + size
+  } else if (corner === 'BR') {
+    cornerX = x + size
+    cornerY = y + size
+  }
+
+  // Calculate direction vector
+  const dx = cornerX - centerX
+  const dy = cornerY - centerY
+  const length = Math.sqrt(dx * dx + dy * dy)
+  const dirX = dx / length
+  const dirY = dy / length
+
+  // Perpendicular vector for width
+  const perpX = -dirY
+  const perpY = dirX
+  const perpOffset = lineWidth / 2
+
+  // Length of pointed tips at both ends
+  const tipLength = size * 0.15
+
+  // Calculate points for hexagon shape with pointed tips at both ends
+  const centerTipX = centerX
+  const centerTipY = centerY
+  const centerBaseX = centerX + dirX * tipLength
+  const centerBaseY = centerY + dirY * tipLength
+
+  const cornerBaseX = cornerX - dirX * tipLength
+  const cornerBaseY = cornerY - dirY * tipLength
+  const cornerTipX = cornerX
+  const cornerTipY = cornerY
+
+  // Draw hexagon shape
+  ctx.fillStyle = color
+  ctx.beginPath()
+
+  // Center tip (pointed)
+  ctx.moveTo(centerTipX, centerTipY)
+
+  // Center base to corner base (one side)
+  ctx.lineTo(centerBaseX + perpX * perpOffset, centerBaseY + perpY * perpOffset)
+  ctx.lineTo(cornerBaseX + perpX * perpOffset, cornerBaseY + perpY * perpOffset)
+
+  // Corner tip (pointed)
+  ctx.lineTo(cornerTipX, cornerTipY)
+
+  // Corner base to center base (other side)
+  ctx.lineTo(cornerBaseX - perpX * perpOffset, cornerBaseY - perpY * perpOffset)
+  ctx.lineTo(centerBaseX - perpX * perpOffset, centerBaseY - perpY * perpOffset)
+
+  ctx.closePath()
+  ctx.fill()
+}
+
+// Helper function to draw three-quarter stitch (triangular fill - 3/4 of square)
+const drawThreeQuarterStitch = (x, y, size, color, missingCorner) => {
+  ctx.fillStyle = color
+
+  ctx.beginPath()
+
+  // Draw triangle based on which corner is missing
+  if (missingCorner === 'TL') {
+    // Missing top-left: triangle covering bottom-right 3/4
+    ctx.moveTo(x + size, y)         // Top-right
+    ctx.lineTo(x + size, y + size)  // Bottom-right
+    ctx.lineTo(x, y + size)         // Bottom-left
+  } else if (missingCorner === 'TR') {
+    // Missing top-right: triangle covering bottom-left 3/4
+    ctx.moveTo(x, y)                // Top-left
+    ctx.lineTo(x, y + size)         // Bottom-left
+    ctx.lineTo(x + size, y + size)  // Bottom-right
+  } else if (missingCorner === 'BL') {
+    // Missing bottom-left: triangle covering top-right 3/4
+    ctx.moveTo(x, y)                // Top-left
+    ctx.lineTo(x + size, y)         // Top-right
+    ctx.lineTo(x + size, y + size)  // Bottom-right
+  } else if (missingCorner === 'BR') {
+    // Missing bottom-right: triangle covering top-left 3/4
+    ctx.moveTo(x, y)                // Top-left
+    ctx.lineTo(x + size, y)         // Top-right
+    ctx.lineTo(x, y + size)         // Bottom-left
+  }
+
+  ctx.closePath()
+  ctx.fill()
+}
+
 // Throttled render function using requestAnimationFrame
 const scheduleRender = () => {
   if (pendingRenderFrame !== null) return // Already scheduled
@@ -710,21 +932,53 @@ const renderGrid = () => {
       const cell = grid.value[y][x]
       const cellX = x * cellSize.value
       const cellY = y * cellSize.value
-      const color = getCellColor(cell)
       const type = getCellType(cell)
-      const direction = getCellDirection(cell)
 
-      if (isTransparent(color)) {
+      if (!cell || isTransparent(cell)) {
         // Clear transparent cells - they'll show the canvas CSS background
         ctx.clearRect(cellX, cellY, cellSize.value, cellSize.value)
-      } else if (type === 'half') {
-        // Clear cell first to make it transparent, then draw half stitch line
-        ctx.clearRect(cellX, cellY, cellSize.value, cellSize.value)
-        drawHalfStitch(cellX, cellY, cellSize.value, color, direction)
-      } else {
+      } else if (type === 'full') {
         // Draw full stitch (solid color)
-        ctx.fillStyle = color
+        ctx.fillStyle = cell
         ctx.fillRect(cellX, cellY, cellSize.value, cellSize.value)
+      } else if (type === 'half' || type === 'cross' || type === 'quarter' || type === 'threeQuarter' || type === 'mixed') {
+        // Clear cell first to make it transparent
+        ctx.clearRect(cellX, cellY, cellSize.value, cellSize.value)
+
+        // Determine drawing order based on what was drawn last
+        const lastDrawn = cell.lastDrawn || 'halfForward'
+
+        // Collect all stitches to draw with their priority
+        const stitchesToDraw = []
+
+        if (cell.forward) stitchesToDraw.push({ type: 'half', direction: '/', color: cell.forward, key: 'halfForward' })
+        if (cell.backward) stitchesToDraw.push({ type: 'half', direction: '\\', color: cell.backward, key: 'halfBackward' })
+        if (cell.quarterTL) stitchesToDraw.push({ type: 'quarter', corner: 'TL', color: cell.quarterTL, key: 'quarterTL' })
+        if (cell.quarterTR) stitchesToDraw.push({ type: 'quarter', corner: 'TR', color: cell.quarterTR, key: 'quarterTR' })
+        if (cell.quarterBL) stitchesToDraw.push({ type: 'quarter', corner: 'BL', color: cell.quarterBL, key: 'quarterBL' })
+        if (cell.quarterBR) stitchesToDraw.push({ type: 'quarter', corner: 'BR', color: cell.quarterBR, key: 'quarterBR' })
+        if (cell.threeQuarterTL) stitchesToDraw.push({ type: 'threeQuarter', corner: 'TL', color: cell.threeQuarterTL, key: 'threeQuarterTL' })
+        if (cell.threeQuarterTR) stitchesToDraw.push({ type: 'threeQuarter', corner: 'TR', color: cell.threeQuarterTR, key: 'threeQuarterTR' })
+        if (cell.threeQuarterBL) stitchesToDraw.push({ type: 'threeQuarter', corner: 'BL', color: cell.threeQuarterBL, key: 'threeQuarterBL' })
+        if (cell.threeQuarterBR) stitchesToDraw.push({ type: 'threeQuarter', corner: 'BR', color: cell.threeQuarterBR, key: 'threeQuarterBR' })
+
+        // Sort so the last-drawn one is rendered last (on top)
+        stitchesToDraw.sort((a, b) => {
+          if (a.key === lastDrawn) return 1 // Draw last
+          if (b.key === lastDrawn) return -1
+          return 0
+        })
+
+        // Draw all stitches in order
+        stitchesToDraw.forEach(stitch => {
+          if (stitch.type === 'half') {
+            drawHalfStitch(cellX, cellY, cellSize.value, stitch.color, stitch.direction)
+          } else if (stitch.type === 'quarter') {
+            drawQuarterStitch(cellX, cellY, cellSize.value, stitch.color, stitch.corner)
+          } else if (stitch.type === 'threeQuarter') {
+            drawThreeQuarterStitch(cellX, cellY, cellSize.value, stitch.color, stitch.corner)
+          }
+        })
       }
     }
   }
@@ -777,9 +1031,6 @@ const renderGrid = () => {
     const { x, y } = cursorPosition.value
     const radius = Math.floor(brushSize.value / 2)
 
-    // Draw semi-transparent overlay for brush area
-    const isHalfStitch = tool.value === 'draw' && stitchType.value !== 'full'
-
     // Use current color for draw tool, red for erase
     if (tool.value === 'draw') {
       // Convert hex to rgba with opacity
@@ -802,89 +1053,28 @@ const renderGrid = () => {
           const cellX = targetX * cellSize.value
           const cellY = targetY * cellSize.value
 
-          if (isHalfStitch) {
-            // Draw diagonal preview for half stitch (hexagon shape)
-            const prevFillStyle = ctx.fillStyle
-            ctx.fillStyle = `rgba(${currentColor}, 0.3)`
-
-            const width = cellSize.value * 0.45
-            const inset = cellSize.value * 0
-            const tipLength = cellSize.value * 0.25
-
-            ctx.beginPath()
-
-            if (getStitchDirection(stitchType.value) === '/') {
-              const x1 = cellX + cellSize.value - inset
-              const y1 = cellY + inset
-              const x2 = cellX + inset
-              const y2 = cellY + cellSize.value - inset
-
-              const dx = x2 - x1
-              const dy = y2 - y1
-              const length = Math.sqrt(dx * dx + dy * dy)
-              const dirX = dx / length
-              const dirY = dy / length
-              const perpX = -dirY
-              const perpY = dirX
-              const perpOffset = width / 2
-
-              const p1x = x1, p1y = y1
-              const p2x = x1 + dirX * tipLength + perpX * perpOffset
-              const p2y = y1 + dirY * tipLength + perpY * perpOffset
-              const p3x = x2 - dirX * tipLength + perpX * perpOffset
-              const p3y = y2 - dirY * tipLength + perpY * perpOffset
-              const p4x = x2, p4y = y2
-              const p5x = x2 - dirX * tipLength - perpX * perpOffset
-              const p5y = y2 - dirY * tipLength - perpY * perpOffset
-              const p6x = x1 + dirX * tipLength - perpX * perpOffset
-              const p6y = y1 + dirY * tipLength - perpY * perpOffset
-
-              ctx.moveTo(p1x, p1y)
-              ctx.lineTo(p2x, p2y)
-              ctx.lineTo(p3x, p3y)
-              ctx.lineTo(p4x, p4y)
-              ctx.lineTo(p5x, p5y)
-              ctx.lineTo(p6x, p6y)
-            } else {
-              const x1 = cellX + inset
-              const y1 = cellY + inset
-              const x2 = cellX + cellSize.value - inset
-              const y2 = cellY + cellSize.value - inset
-
-              const dx = x2 - x1
-              const dy = y2 - y1
-              const length = Math.sqrt(dx * dx + dy * dy)
-              const dirX = dx / length
-              const dirY = dy / length
-              const perpX = -dirY
-              const perpY = dirX
-              const perpOffset = width / 2
-
-              const p1x = x1, p1y = y1
-              const p2x = x1 + dirX * tipLength + perpX * perpOffset
-              const p2y = y1 + dirY * tipLength + perpY * perpOffset
-              const p3x = x2 - dirX * tipLength + perpX * perpOffset
-              const p3y = y2 - dirY * tipLength + perpY * perpOffset
-              const p4x = x2, p4y = y2
-              const p5x = x2 - dirX * tipLength - perpX * perpOffset
-              const p5y = y2 - dirY * tipLength - perpY * perpOffset
-              const p6x = x1 + dirX * tipLength - perpX * perpOffset
-              const p6y = y1 + dirY * tipLength - perpY * perpOffset
-
-              ctx.moveTo(p1x, p1y)
-              ctx.lineTo(p2x, p2y)
-              ctx.lineTo(p3x, p3y)
-              ctx.lineTo(p4x, p4y)
-              ctx.lineTo(p5x, p5y)
-              ctx.lineTo(p6x, p6y)
+          // Draw preview based on stitch type
+          if (tool.value === 'draw' && stitchType.value !== 'full') {
+            // Draw specific stitch preview
+            if (stitchType.value === 'halfForward' || stitchType.value === 'halfBackward') {
+              const direction = stitchType.value === 'halfForward' ? '/' : '\\'
+              // Use a semi-transparent version for preview
+              ctx.globalAlpha = 0.4
+              drawHalfStitch(cellX, cellY, cellSize.value, currentColor.value, direction)
+              ctx.globalAlpha = 1.0
+            } else if (stitchType.value.startsWith('quarter')) {
+              const corner = stitchType.value.replace('quarter', '')
+              ctx.globalAlpha = 0.4
+              drawQuarterStitch(cellX, cellY, cellSize.value, currentColor.value, corner)
+              ctx.globalAlpha = 1.0
+            } else if (stitchType.value.startsWith('threeQuarter')) {
+              const corner = stitchType.value.replace('threeQuarter', '')
+              ctx.globalAlpha = 0.4
+              drawThreeQuarterStitch(cellX, cellY, cellSize.value, currentColor.value, corner)
+              ctx.globalAlpha = 1.0
             }
-
-            ctx.closePath()
-            ctx.fill()
-
-            // Restore previous state
-            ctx.fillStyle = prevFillStyle
           } else {
+            // Full stitch or erase: draw filled rectangle
             ctx.fillRect(cellX, cellY, cellSize.value, cellSize.value)
           }
         }
@@ -947,7 +1137,7 @@ const stopDrawing = () => {
 }
 
 // Apply brush at given position with current brush size
-const applyBrush = (centerX, centerY, cellData) => {
+const applyBrush = (centerX, centerY, cellData, stitchTypeParam = null) => {
   const radius = Math.floor(brushSize.value / 2)
 
   for (let dy = -radius; dy < brushSize.value - radius; dy++) {
@@ -958,7 +1148,15 @@ const applyBrush = (centerX, centerY, cellData) => {
       // Check bounds
       if (targetX >= 0 && targetX < gridWidth.value &&
         targetY >= 0 && targetY < gridHeight.value) {
-        grid.value[targetY][targetX] = cellData
+
+        if (stitchTypeParam) {
+          // For stitches with specific types, merge with existing cell
+          const existingCell = grid.value[targetY][targetX]
+          grid.value[targetY][targetX] = addStitch(existingCell, cellData, stitchTypeParam)
+        } else {
+          // For full stitches or erase, replace cell
+          grid.value[targetY][targetX] = cellData
+        }
       }
     }
   }
@@ -970,11 +1168,10 @@ const drawPixel = (event) => {
   if (x >= 0 && x < gridWidth.value && y >= 0 && y < gridHeight.value) {
     if (tool.value === 'draw') {
       if (stitchType.value === 'full') {
-        applyBrush(x, y, currentColor.value)
+        applyBrush(x, y, currentColor.value, null)
       } else {
-        const direction = getStitchDirection(stitchType.value)
-        const cellData = createCell(currentColor.value, 'half', direction)
-        applyBrush(x, y, cellData)
+        // Pass the stitch type directly for all other stitch types
+        applyBrush(x, y, currentColor.value, stitchType.value)
       }
       renderGrid()
     } else if (tool.value === 'erase') {
